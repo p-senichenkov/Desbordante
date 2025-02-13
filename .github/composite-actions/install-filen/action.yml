@@ -1,0 +1,25 @@
+name: 'Install Filen'
+description: 'Install Filen and determine its options'
+inputs:
+  Login:
+    type: str
+  Password:
+    type: str
+outputs:
+  Filen:
+    value: ${{ steps.command.outputs.Filen }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Filen
+      shell: bash
+      run: |
+        curl https://github.com/FilenCloudDienste/filen-cli/releases/download/v0.0.29/filen-cli-v0.0.29-linux-x64 -L -o filen
+        chmod +x filen
+        ./filen --version
+    - name: Compose Filen command
+      id: command
+      shell: bash
+      run: |
+        echo "Filen=$PWD/filen --email=${{ inputs.Login }} \
+        --password=${{ inputs.Password }}" >> $GITHUB_OUTPUT
