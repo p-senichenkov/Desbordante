@@ -54,6 +54,7 @@ endif()
 
 option(COPY_PYTHON_EXAMPLES "Copy Python examples" OFF)
 option(COMPILE_TESTS "Build tests" ON)
+option(COMPILE_BENCHMARKS "Build benchmarks" OFF)
 option(UNPACK_DATASETS "Unpack datasets" ON)
 option(BUILD_NATIVE "Build for host machine" ON)
 option(USE_LTO "Build using interprocedural optimization" OFF)
@@ -311,6 +312,9 @@ add_subdirectory("cfg")
 # Configure tests
 if(COMPILE_TESTS)
     enable_testing()
+endif()
+
+if (COMPILE_TESTS OR COMPILE_BENCHMARKS)
     add_subdirectory("src/tests")
 endif()
 
