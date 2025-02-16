@@ -19,3 +19,56 @@ add_custom_command(
 )
 
 add_dependencies(unZip make-input-data-dir)
+
+# TODO(senichenkov): if there will be a lot of cropped datasets, it'd be better to
+# read 'em from some kind of list
+# FIXME(senichenkov): `head`, `cat` and `cut` are not cross-platform
+add_custom_target( cropDatasets ALL
+	DEPENDS
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult60k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway5attr.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa100k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa25attr1kk.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa600k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa900k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroom2k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors120k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors130k.csv
+)
+add_custom_command(
+	OUTPUT
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult60k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway5attr.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa100k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa25attr1kk.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa600k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa900k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroom2k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors120k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors130k.csv
+	COMMAND cat adult.csv adult.csv | head -n60001 > adult60k.csv
+	COMMAND head -n200001 CIPublicHighway.csv > CIPublicHighway200k.csv
+	COMMAND cut -d, -f -10 CIPublicHighway.csv > CIPublicHighway10attr.csv
+	COMMAND cut -d, -f -5 CIPublicHighway.csv > CIPublicHighway5attr.csv
+	COMMAND head -n100001 iowa1kk.csv > iowa100k.csv
+	# Actually, in some lines only 24 attributes are selected, beacuse "Store Location" field
+	# contains comma, but it's enough for testing purposes
+	COMMAND cut -d, -f -25 iowa1kk.csv > iowa25attr1kk.csv
+	COMMAND head -n500001 iowa1kk.csv > iowa500k.csv
+	COMMAND head -n600001 iowa1kk.csv > iowa600k.csv
+	COMMAND head -n900001 iowa1kk.csv > iowa900k.csv
+	COMMAND head -n2001 cfd_data/mushroom.csv > mushroom2k.csv
+	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n120001 > neighbors120k.csv
+	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n130001 > neighbors130k.csv
+	WORKING_DIRECTORY
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/
+)
+
+
+add_dependencies(cropDatasets unZip)
