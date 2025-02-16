@@ -8,6 +8,9 @@ file(GLOB_RECURSE test_sources "*.h*" "*.cpp*")
 add_executable(${BINARY} ${test_sources})
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
+# include "tests" directory for header inclusion
+target_include_directories(${BINARY} PRIVATE ".")
+
 # linking with gtest and implemented classes
 target_link_libraries(${BINARY} PRIVATE ${CMAKE_PROJECT_NAME} gtest gmock Boost::graph)
 
