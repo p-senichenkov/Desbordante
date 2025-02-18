@@ -120,4 +120,4 @@ cd ..
 mkdir -p build
 cd build
 rm -f CMakeCache.txt
-cmake $PREFIX .. && make $JOBS_OPTION
+cmake $PREFIX -GNinja .. && ninja $JOBS_OPTION

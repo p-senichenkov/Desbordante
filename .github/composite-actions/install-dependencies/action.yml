@@ -56,11 +56,11 @@ runs:
     - name: Install build tools using apt
       run: |
         sudo apt-get update -y
-        sudo apt-get install cmake build-essential -y
+        sudo apt-get install cmake build-essential ninja-build -y
       shell: bash
       if: env.OS == 'ubuntu'
     - name: Install build tools using brew
-      run: brew install make cmake --formula
+      run: brew install ninja-build cmake --formula
       shell: bash
       if: env.OS == 'macos'
 
