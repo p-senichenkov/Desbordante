@@ -3,6 +3,7 @@
 build/
 cmake-build-debug/
 dist/
+**/__pycache__
 lib/
 venv/
 
