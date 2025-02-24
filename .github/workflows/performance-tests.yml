@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Turn test server on
-        shell: bash
         run: |
           ANSW=$(curl -X POST \
           -H "Authorization: Bearer ${{ secrets.REGRU_API_KEY }}" \
@@ -36,68 +35,39 @@ jobs:
           #   exit 1
           # fi
       - name: Wait for the server to start
-        shell: bash
         run: sleep 30
 
-  download-previous-results:
+  performance-tests:
     runs-on: [self-hosted, RegRu]
     needs: turn-test-server-on
     env:
-      LatestLogName: # no value
-      # Name of remote folder with test results
-      LogDirName: performance-tests-regru
+      LogDirName: /home/github-user/performance-tests
+      OldFilename: # set dynamically
+      NewFilename: # set dynamically
     steps:
       # GitHub creates new clear VM on its runner here
       # Without this step checkout is unable to clear repository, because `lib` somehow
       # contains files, owned by `root`
       - name: Clear working directory
-        shell: bash
         run: sudo rm -rf ${{ github.workspace }}/*
       - uses: actions/checkout@v4
-      - uses: ./.github/composite-actions/install-filen
-        id: filen
-        with:
-          Login: ${{ secrets.FILEN_LOGIN }}
-          Password: ${{ secrets.FILEN_PASSWORD }}
       - name: Select latest log
-        shell: bash
-        # TODO(senichenkov): I'm sure this can be done easier
         run: |
-          echo "LatestLogName=$(${{ steps.filen.outputs.Filen }} ls ${{ env.LogDirName }} \
-           | grep -o "results-[0-9|:|-]*\.json" | sort | tail -n 1)" >> $GITHUB_ENV
-          echo "Latest log name: ${{ env.LatestLogName }}"
-      - name: Download latest log
-        shell: bash
+          echo "OldFilename=$(ls ${{ env.LogDirName }} | grep -o "results-[0-9|:|-]*\.json" | \
+          tail -n 1)" >> $GITHUB_ENV
+      - name: Copy latest log
         run: |
-          if [[ -z "${{ env.LatestLogName }}" ]]; then
+          if [[ -z "${{ env.OldFilename }}" ]]; then
             echo "No file selected. Using empty JSON"
             # There are 2 possible problems:
             #   1. No such directory
             #   2. Directory is empty or doesn't contain any file that match regexp
-            ${{ steps.filen.outputs.Filen }} mkdir ${{ env.LogDirName }}
-            # {} is an empty JSON
+            mkdir -p ${{ env.LogDirName }}
             echo "{}" > ${{ github.workspace }}/prev-results.json
           else
-            ${{ steps.filen.outputs.Filen }} download \
-             ${{ env.LogDirName }}/${{ env.LatestLogName }} \
+            cp ${{ env.LogDirName }}/${{ env.OldFilename }} \
              ${{ github.workspace }}/prev-results.json
           fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: prev-results.json
-          path: ${{ github.workspace }}/prev-results.json
-          if-no-files-found: error
-          # This file is supposed to be very small
-          compression-level: 0
-
-  performance-tests:
-    runs-on: [self-hosted, RegRu]
-    needs: download-previous-results
-    steps:
-      - name: Clear working directory
-        shell: bash
-        run: sudo rm -rf ${{ github.workspace }}/*
-      - uses: actions/checkout@v4
       - name: Install dependencies
         uses: ./.github/composite-actions/install-dependencies
         with:
@@ -106,88 +76,40 @@ jobs:
       - name: Download datasets
         uses: ./.github/composite-actions/download-datasets
       - name: Build
-        shell: bash
         run: |
           export CXX=g++-10
           ./build.sh
       - name: Test
         working-directory: ${{github.workspace}}/build/target
-        shell: bash
         run: |
           ./Desbordante_test --gtest_filter='*PerformanceTests*' \
            --gtest_output=json:${{ github.workspace }}/gtest_output.json
-      - uses: actions/download-artifact@v4
-        with:
-          name: prev-results.json
       - name: Read downloaded file
-        shell: bash
         run: cat ${{ github.workspace }}/prev-results.json
       - name: Parse test results
-        shell: bash
         working-directory: ${{ github.workspace }}
         run: |
           python3 src/tests/performance_tests/performance_tests.py \
            gtest_output.json curr-results.json prev-results.json
       - name: Read current results
-        shell: bash
         run: cat ${{ github.workspace }}/curr-results.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: curr-results.json
-          path: ${{ github.workspace }}/curr-results.json
-          if-no-files-found: error
-          # This file is supposed to be very small
-          compression-level: 0
-
-  upload-current-results:
-    runs-on: [self-hosted, RegRu]
-    needs: performance-tests
-    env:
-      # File to store test results
-      Filename: # no value
-      # Name of remote folder with test results
-      LogDirName: performance-tests-regru
-    steps:
-      - name: Clear working directory
-        shell: bash
-        run: sudo rm -rf ${{ github.workspace }}/*
-      - uses: actions/checkout@v4
-      - uses: ./.github/composite-actions/install-filen
-        id: filen
-        with:
-          Login: ${{ secrets.FILEN_LOGIN }}
-          Password: ${{ secrets.FILEN_PASSWORD }}
       - name: Select filename
         shell: bash
-        run: echo "Filename=results-$(date +%F-%H:%M:%S).json" >> $GITHUB_ENV
-      - uses: actions/download-artifact@v4
-        with:
-          name: curr-results.json
-      - name: Upload current results
-        shell: bash
+        run: echo "NewFilename=results-$(date +%F-%H:%M:%S).json" >> $GITHUB_ENV
+      - name: Save current results
         run: |
-          ${{ steps.filen.outputs.Filen }} upload ${{ github.workspace }}/curr-results.json \
-           ${{ env.LogDirName }}/${{ env.Filename }}
+          cp ${{ github.workspace }}/curr-results.json ${{ env.LogDirName }}/${{ env.NewFilename }}
 
-  # If there's more than N files on remote, purge the oldest ones
+  # If there's more than N files saved, purge the oldest ones
   purge-old-results:
-    needs: upload-current-results
+    needs: performance-tests
     runs-on: [self-hosted, RegRu]
     env:
-      # Name of remote folder with test results
-      LogDirName: performance-tests-regru
+      # Name of folder with test results
+      LogDirName: /home/github-user/performance-tests
       # Number of files to keep
       N: 100
     steps:
-      - name: Clear working directory
-        shell: bash
-        run: sudo rm -rf ${{ github.workspace }}/*
-      - uses: actions/checkout@v4
-      - uses: ./.github/composite-actions/install-filen
-        id: filen
-        with:
-          Login: ${{ secrets.FILEN_LOGIN }}
-          Password: ${{ secrets.FILEN_PASSWORD }}
       - name: Purge old files
         shell: bash
         run: |
@@ -198,45 +120,22 @@ jobs:
             echo $(ls ${{ env.LogDirName }} | grep -o "results-[0-9|:|-]*\.json" | head -n1)
           }
 
-          # Filen doesn't provide non-interactive `rm`, so a little trick is needed:
-          # donwload remote dir -> `rm` files in local dir -> sync local dir with remote
-          ${{ steps.filen.outputs.Filen }} download ${{ env.LogDirName }} ${{ env.LogDirName }}
-
           while [ $(get_num) -gt ${{ env.N }} ]; do
             rm ${{ env.LogDirName }}/$(get_first)
           done
 
-          # "ltc" means "local-to-server"
-          ${{ steps.filen.outputs.Filen }} sync ${{ env.LogDirName }}:ltc:${{ env.LogDirName }}
-
   build-plot:
     runs-on: [self-hosted, Regru]
-    needs: upload-current-results
+    needs: performance-tests
     env:
       # File to store test results
       Filename: # no value
-      # Name of remote folder with test results (local folder has the same name for brevity)
-      LogDirName: performance-tests-regru
+      # Name of folder with test results
+      LogDirName: /home/github-user/performance-tests
     steps:
-      - name: Clear working directory
-        shell: bash
-        run: sudo rm -rf ${{ github.workspace }}/*
-      - uses: actions/checkout@v4
-      - uses: ./.github/composite-actions/install-filen
-        id: filen
-        with:
-          Login: ${{ secrets.FILEN_LOGIN }}
-          Password: ${{ secrets.FILEN_PASSWORD }}
-      - name: Download all old results
-        shell: bash
-        working-directory: ${{ github.workspace }}
-        run: |
-          ${{ steps.filen.outputs.Filen }} download ${{ env.LogDirName }} ${{ env.LogDirName }}
       - name: Install matplotlib
-        shell: bash
         run: sudo apt install -y python3-matplotlib
       - name: Build plots
-        shell: bash
         working-directory: ${{ github.workspace }}
         run: |
           python3 src/tests/performance_tests/display_performance_tests.py \
@@ -254,10 +153,8 @@ jobs:
     if: always()
     steps:
       - name: Wait a little
-        shell: bash
         run: sleep 5
       - name: Turn test server off
-        shell: bash
         run: |
           ANSW=$(curl -X POST \
           -H "Authorization: Bearer ${{ secrets.REGRU_API_KEY }}" \
