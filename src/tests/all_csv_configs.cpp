@@ -16,7 +16,7 @@ CSVConfig CreateCsvConfig(std::string_view filename, char separator, bool has_he
 CSVConfig const kAbalone = CreateCsvConfig("abalone.csv", ',', false);
 CSVConfig const kACShippingDates = CreateCsvConfig("ACShippingDates.csv", ',', true);
 CSVConfig const kAdult = CreateCsvConfig("adult.csv", ';', false);
-CSVConfig const kAdult5k = CreateCsvConfig("adult5k.csv", ';', false);
+CSVConfig const kAdult3k = CreateCsvConfig("adult3k.csv", ';', false);
 CSVConfig const kAnimalsBeverages = CreateCsvConfig("animals_beverages.csv", ',', true);
 CSVConfig const kBernoulliRelation = CreateCsvConfig("BernoulliRelation.csv", ',', true);
 CSVConfig const kBreastCancer = CreateCsvConfig("breast_cancer.csv", ',', true);
