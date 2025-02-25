@@ -34,7 +34,7 @@ add_custom_target( cropDatasets ALL
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa600k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa900k.csv
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroom5k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroomAndCIPublicHighway1k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors120k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors130k.csv
 )
@@ -49,13 +49,13 @@ add_custom_command(
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa600k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa900k.csv
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroom5k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroomAndCIPublicHighway1k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors120k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors130k.csv
 	COMMAND cat adult.csv adult.csv | head -n60001 > adult60k.csv
 	COMMAND head -n200001 CIPublicHighway.csv > CIPublicHighway200k.csv
 	COMMAND cut -d, -f -10 CIPublicHighway.csv > CIPublicHighway10attr.csv
-	COMMAND cut -d, -f -5 CIPublicHighwayk.csv | head -n20001 > CIPublicHighway5attr20k.csv
+	COMMAND cut -d, -f -5 CIPublicHighway.csv | head -n20001 > CIPublicHighway5attr20k.csv
 	COMMAND head -n100001 iowa1kk.csv > iowa100k.csv
 	# Actually, in some lines only 24 attributes are selected, beacuse "Store Location" field
 	# contains comma, but it's enough for testing purposes
@@ -63,12 +63,11 @@ add_custom_command(
 	COMMAND head -n500001 iowa1kk.csv > iowa500k.csv
 	COMMAND head -n600001 iowa1kk.csv > iowa600k.csv
 	COMMAND head -n900001 iowa1kk.csv > iowa900k.csv
-	COMMAND head -n5001 cfd_data/mushroom.csv > mushroom5k.csv
+	COMMAND paste cfd_data/mushroom.csv CIPublicHighway.csv -d, | head -n1001 > mushroomAndCIPublicHighway1k.csv
 	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n120001 > neighbors120k.csv
 	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n130001 > neighbors130k.csv
 	WORKING_DIRECTORY
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/
 )
-
 
 add_dependencies(cropDatasets unZip)
