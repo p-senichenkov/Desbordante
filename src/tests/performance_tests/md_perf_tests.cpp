@@ -19,8 +19,8 @@ using namespace config::names;
 
 constexpr static model::md::DecisionBoundary kMinSimilarity = 0.7;
 
-TEST(HeavyDatasetsPerformanceTests, HyMD_CIPublicHighway5attr10k) {
-    config::InputTable table = std::make_unique<CSVParser>(kCIPublicHighway5attr10k);
+TEST(HeavyDatasetsPerformanceTests, HyMD_CIPublicHighway5attr20k) {
+    config::InputTable table = std::make_unique<CSVParser>(kCIPublicHighway5attr20k);
 
     HyMD::ColumnMatches column_matches_option;
     std::size_t const number_of_columns = table->GetNumberOfColumns();
