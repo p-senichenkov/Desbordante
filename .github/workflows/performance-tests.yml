@@ -51,6 +51,22 @@ jobs:
       - name: Clear working directory
         run: sudo rm -rf ${{ github.workspace }}/*
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        uses: ./.github/composite-actions/install-dependencies
+        with:
+          os: ubuntu-latest
+          toolset: gcc
+      - name: Download datasets
+        uses: ./.github/composite-actions/download-datasets
+      - name: Build
+        run: |
+          export CXX=g++-10
+          ./build.sh
+      - name: Test
+        working-directory: ${{github.workspace}}/build/target
+        run: |
+          ./Desbordante_test --gtest_filter='*PerformanceTests*' \
+           --gtest_output=json:${{ github.workspace }}/gtest_output.json
       - name: Select latest log
         run: |
           echo "OldFilename=$(ls ${{ env.LogDirName }} | grep -o "results-[0-9|:|-]*\.json" | \
@@ -68,22 +84,6 @@ jobs:
             cp ${{ env.LogDirName }}/${{ env.OldFilename }} \
              ${{ github.workspace }}/prev-results.json
           fi
-      - name: Install dependencies
-        uses: ./.github/composite-actions/install-dependencies
-        with:
-          os: ubuntu-latest
-          toolset: gcc
-      - name: Download datasets
-        uses: ./.github/composite-actions/download-datasets
-      - name: Build
-        run: |
-          export CXX=g++-10
-          ./build.sh
-      - name: Test
-        working-directory: ${{github.workspace}}/build/target
-        run: |
-          ./Desbordante_test --gtest_filter='*PerformanceTests*' \
-           --gtest_output=json:${{ github.workspace }}/gtest_output.json
       - name: Read downloaded file
         run: cat ${{ github.workspace }}/prev-results.json
       - name: Parse test results
