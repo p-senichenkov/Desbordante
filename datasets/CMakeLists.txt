@@ -55,7 +55,7 @@ add_custom_command(
 	COMMAND cat adult.csv adult.csv | head -n60001 > adult60k.csv
 	COMMAND head -n200001 CIPublicHighway.csv > CIPublicHighway200k.csv
 	COMMAND cut -d, -f -10 CIPublicHighway.csv > CIPublicHighway10attr.csv
-	COMMAND cut -d, -f -5 CIPublicHighway50k.csv | head -n20001 > CIPublicHighway5attr20k.csv
+	COMMAND cut -d, -f -5 CIPublicHighwayk.csv | head -n20001 > CIPublicHighway5attr20k.csv
 	COMMAND head -n100001 iowa1kk.csv > iowa100k.csv
 	# Actually, in some lines only 24 attributes are selected, beacuse "Store Location" field
 	# contains comma, but it's enough for testing purposes
