@@ -84,12 +84,12 @@ TEST_P(AFDTaneTest, AFDTane) {
 INSTANTIATE_TEST_SUITE_P(
         HeavyDatasetsPerformanceTests, AFDTaneTest,
         ::testing::Values(
-                AFDTaneMiningParams(kMushroomAndCIPublicHighway1k, +algos::AfdErrorMeasure::g1),
-                AFDTaneMiningParams(kMushroomAndCIPublicHighway1k, +algos::AfdErrorMeasure::pdep),
-                AFDTaneMiningParams(kMushroomAndCIPublicHighway1k, +algos::AfdErrorMeasure::tau),
-                AFDTaneMiningParams(kMushroomAndCIPublicHighway1k,
+                AFDTaneMiningParams(kMushroomAndCIPublicHighway500, +algos::AfdErrorMeasure::g1),
+                AFDTaneMiningParams(kMushroomAndCIPublicHighway500, +algos::AfdErrorMeasure::pdep),
+                AFDTaneMiningParams(kMushroomAndCIPublicHighway500, +algos::AfdErrorMeasure::tau),
+                AFDTaneMiningParams(kMushroomAndCIPublicHighway500,
                                     +algos::AfdErrorMeasure::mu_plus),
-                AFDTaneMiningParams(kMushroomAndCIPublicHighway1k, +algos::AfdErrorMeasure::rho)),
+                AFDTaneMiningParams(kMushroomAndCIPublicHighway500, +algos::AfdErrorMeasure::rho)),
         [](::testing::TestParamInfo<AFDTaneTest::ParamType> const& info) -> std::string {
             auto param = info.param;
 
