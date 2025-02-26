@@ -63,7 +63,7 @@ add_custom_command(
 	COMMAND head -n500001 iowa1kk.csv > iowa500k.csv
 	COMMAND head -n600001 iowa1kk.csv > iowa600k.csv
 	COMMAND head -n900001 iowa1kk.csv > iowa900k.csv
-	COMMAND paste cfd_data/mushroom.csv CIPublicHighway.csv -d, | head -n501 > mushroomAndCIPublicHighwa500.csv
+	COMMAND paste cfd_data/mushroom.csv CIPublicHighway.csv -d, | head -n501 > mushroomAndCIPublicHighway500.csv
 	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n120001 > neighbors120k.csv
 	COMMAND cat neighbors100k.csv neighbors100k.csv | head -n130001 > neighbors130k.csv
 	WORKING_DIRECTORY
