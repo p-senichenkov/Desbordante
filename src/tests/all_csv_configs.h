@@ -38,7 +38,7 @@ extern CSVConfig const kLegacyPayors;
 extern CSVConfig const kLetter;
 extern CSVConfig const kLineItem;
 extern CSVConfig const kMushroom;
-extern CSVConfig const kMushroomAndCIPublicHighway1k;
+extern CSVConfig const kMushroomAndCIPublicHighway500;
 extern CSVConfig const kNeighbors10k;
 extern CSVConfig const kNeighbors50k;
 extern CSVConfig const kNeighbors100k;
