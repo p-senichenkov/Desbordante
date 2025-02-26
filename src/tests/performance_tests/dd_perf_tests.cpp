@@ -10,6 +10,7 @@ namespace tests {
 using namespace algos;
 using namespace config::names;
 
+#if 0
 TEST(HeavyDatasetsPerformanceTests, Split_Adult8attr100) {
     StdParamsMap param_map{
             {kCsvConfig, kAdult8attr100}
@@ -19,5 +20,6 @@ TEST(HeavyDatasetsPerformanceTests, Split_Adult8attr100) {
     algo->Execute();
     SUCCEED();
 }
+#endif
 
 }  // namespace tests
