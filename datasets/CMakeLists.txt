@@ -25,7 +25,7 @@ add_dependencies(unZip make-input-data-dir)
 # FIXME(senichenkov): `head`, `cat` and `cut` are not cross-platform
 add_custom_target( cropDatasets ALL
 	DEPENDS
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr1k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr100.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway5attr20k.csv
@@ -40,7 +40,7 @@ add_custom_target( cropDatasets ALL
 )
 add_custom_command(
 	OUTPUT
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr1k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr100.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway5attr20k.csv
@@ -52,7 +52,7 @@ add_custom_command(
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/mushroomAndCIPublicHighway500.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors120k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/neighbors130k.csv
-	COMMAND cut -d';' -f -8 adult.csv | head -n1001 > adult8attr1k.csv
+	COMMAND cut -d';' -f -8 adult.csv | head -n101 > adult8attr100.csv
 	COMMAND head -n200001 CIPublicHighway.csv > CIPublicHighway200k.csv
 	COMMAND cut -d, -f -10 CIPublicHighway.csv > CIPublicHighway10attr.csv
 	COMMAND cut -d, -f -5 CIPublicHighway.csv | head -n20001 > CIPublicHighway5attr20k.csv
