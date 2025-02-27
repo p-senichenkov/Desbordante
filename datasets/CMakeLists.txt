@@ -28,7 +28,7 @@ add_custom_target( cropDatasets ALL
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr100.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr30k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway15attr40k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa100k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa25attr1kk.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
@@ -43,7 +43,7 @@ add_custom_command(
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/adult8attr100.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway200k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr.csv
-		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway10attr30k.csv
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/CIPublicHighway15attr40k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa100k.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa25attr1kk.csv
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input_data/iowa500k.csv
@@ -55,7 +55,7 @@ add_custom_command(
 	COMMAND cut -d';' -f -8 adult.csv | head -n101 > adult8attr100.csv
 	COMMAND head -n200001 CIPublicHighway.csv > CIPublicHighway200k.csv
 	COMMAND cut -d, -f -10 CIPublicHighway.csv > CIPublicHighway10attr.csv
-	COMMAND cut -d, -f -10 CIPublicHighway.csv | head -n30001 > CIPublicHighway10attr30k.csv
+	COMMAND cut -d, -f -15 CIPublicHighway.csv | head -n40001 > CIPublicHighway15attr40k.csv
 	COMMAND head -n100001 iowa1kk.csv > iowa100k.csv
 	# Actually, in some lines only 24 attributes are selected, beacuse "Store Location" field
 	# contains comma, but it's enough for testing purposes
