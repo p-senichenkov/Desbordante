@@ -1,7 +1,10 @@
 import json
 from sys import argv
 
-THRESHOLD = 15 # in percent
+THRESHOLD = 10 # in percent
+
+# Different thresholds for some specific algos
+DYNAMIC_THRESHOLDS = {'Pyro': 15}
 
 # Process JSON file with results, produced by googletest
 def process_results(filename: str) -> dict[str: int]:
@@ -49,8 +52,13 @@ def test(name: str, old_results: dict[str: int], curr_result: dict[str: int]) ->
             # All performance tests should work a long time, so it's impossible situation
             # But for debugging purposes, take THRESHOLD milliseconds as normal overhead from zero
             overhead = diff / THRESHOLD * 100
-        # TODO(senichenkov): either use dynamic threshold or do something with Pyro
-        threshold = 25 if name.startswith('Pyro') else THRESHOLD
+
+        threshold = THRESHOLD
+        for dyn_algo_name in DYNAMIC_THRESHOLDS:
+            if name.startswith(dyn_algo_name):
+                threshold = DYNAMIC_THRESHOLDS[dyn_algo_name]
+                break
+
         if overhead <= threshold:
             print(f'{name}: SUCESS: difference is {overhead}%')
             return True
