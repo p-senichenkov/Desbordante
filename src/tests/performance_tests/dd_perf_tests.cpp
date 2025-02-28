@@ -12,7 +12,7 @@ using namespace config::names;
 
 TEST(HeavyDatasetsPerformanceTests, Split_Adult5attr100) {
     StdParamsMap param_map{
-            {kCsvConfig, kAdult8attr100}
+            {kCsvConfig, kAdult5attr100}
     };
     auto algo = CreateAndLoadAlgorithm<dd::Split>(param_map);
 
