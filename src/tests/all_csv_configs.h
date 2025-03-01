@@ -6,7 +6,7 @@ namespace tests {
 extern CSVConfig const kAbalone;
 extern CSVConfig const kACShippingDates;
 extern CSVConfig const kAdult;
-extern CSVConfig const kAdult5attr100;
+extern CSVConfig const kAdult5attr50;
 extern CSVConfig const kAnimalsBeverages;
 extern CSVConfig const kBernoulliRelation;
 extern CSVConfig const kBreastCancer;
