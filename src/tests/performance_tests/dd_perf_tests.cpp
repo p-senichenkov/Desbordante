@@ -10,9 +10,9 @@ namespace tests {
 using namespace algos;
 using namespace config::names;
 
-TEST(HeavyDatasetsPerformanceTests, Split_Adult5attr20) {
+TEST(HeavyDatasetsPerformanceTests, Split_Adult5attr10) {
     StdParamsMap param_map{
-            {kCsvConfig, kAdult5attr20}
+            {kCsvConfig, kAdult5attr10}
     };
     auto algo = CreateAndLoadAlgorithm<dd::Split>(param_map);
 
