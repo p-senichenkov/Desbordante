@@ -150,6 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-plot, purge-old-results]
     # Even if previous jobs failed
+    # TODO(senichenkov): this shouldn't run if same job is running concurrently
     if: always()
     steps:
       - name: Wait a little
