@@ -34,7 +34,6 @@ jobs:
           ./build.sh --perf-tests --no-tests
 
       - name: Get run IDs
-        working-directory: ${{ github.workspace }}
         run: |
           curl -L \
             -o runs.json \
@@ -75,7 +74,6 @@ jobs:
           done
 
       - name: Get latest log
-        working-directory: ${{ github.workspace }}
         run: |
           FILENAME=old-results/$(ls old-results | head -n 1)
           if [[ -n "$FILENAME" ]]; then
@@ -101,7 +99,6 @@ jobs:
         run: sudo apt install -y python3-matplotlib
         if: ${{ !cancelled() }}
       - name: Build plots
-        working-directory: ${{ github.workspace }}
         run: |
           python3 src/tests/performance_tests/display_performance_tests.py old-results \
             curr-results.json plots.pdf
