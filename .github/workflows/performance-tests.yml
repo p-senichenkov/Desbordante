@@ -95,12 +95,11 @@ jobs:
           path: curr-results.json
         if: ${{ !cancelled() }}
 
-      - name: Install matplotlib
-        run: sudo apt install -y python3-matplotlib
-        if: ${{ !cancelled() }}
       - name: Build plots
         run: |
-          python3 src/tests/performance_tests/display_performance_tests.py old-results \
+          python3 -m venv .venv
+          .venv/python3 -m pip install matplotlib
+          .venv/python3 src/tests/performance_tests/display_performance_tests.py old-results \
             curr-results.json plots.pdf
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
