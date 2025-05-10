@@ -98,8 +98,8 @@ jobs:
       - name: Build plots
         run: |
           python3 -m venv .venv
-          .venv/python3 -m pip install matplotlib
-          .venv/python3 src/tests/performance_tests/display_performance_tests.py old-results \
+          .venv/bin/python3 -m pip install matplotlib
+          .venv/bin/python3 src/tests/performance_tests/display_performance_tests.py old-results \
             curr-results.json plots.pdf
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
