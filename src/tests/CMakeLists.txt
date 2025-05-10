@@ -2,7 +2,7 @@ set(UNIT_TEST_BINARY ${CMAKE_PROJECT_NAME}_test)
 set(PERF_TEST_BINARY ${CMAKE_PROJECT_NAME}_perf_test)
 
 file(GLOB common_sources "common/*.h" "common/*.cpp")
-file(GLOB unit_test_sources "unit_tests/*.h" "unit_tests/*.cpp")
+file(GLOB unit_test_sources "unit/*.h" "unit/*.cpp")
 file(GLOB perf_test_sources "performance_tests/*.h" "performance_tests/*.cpp")
 
 if (COMPILE_TESTS)
