@@ -4,15 +4,15 @@
 
 #include "algorithms/nar/des/des.h"
 #include "all_csv_configs.h"
+#include "benchmark_controller.h"
 #include "config/names.h"
-#include "performance_testing.h"
 
-namespace perf_tests {
+namespace benchmark {
 
-inline void NARPerfTests() {
+inline void NARBenchmark() {
     using namespace config::names;
 
-    PerformanceTesting::Instance().RegisterSimpleTest<algos::des::DES>(
+    BenchmarkController::Instance().RegisterSimpleTest<algos::des::DES>(
             tests::kAdult, {{kMinimumSupport, 0.0},
                             {kMinimumConfidence, 0.0},
                             {kPopulationSize, static_cast<unsigned>(std::pow(10, 5))},
@@ -22,4 +22,4 @@ inline void NARPerfTests() {
                             {kDifferentialStrategy, +algos::des::DifferentialStrategy::rand1Bin}});
 }
 
-}  // namespace perf_tests
+}  // namespace benchmark

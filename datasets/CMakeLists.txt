@@ -16,7 +16,7 @@ add_custom_target(unZip ALL
 
 add_dependencies(unZip make-input-data-dir)
 
-if (COMPILE_PERFORMANCE_TESTS)
+if (COMPILE_BENCHMARK)
 	# Please, don't forget to add here names of datasets you want to produce
 	set(cropped_dataset_names
 		adult9attr.csv CIPublicHighway20attr55k.csv iowa550k.csv iowa650k.csv

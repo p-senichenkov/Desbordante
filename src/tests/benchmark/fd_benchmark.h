@@ -6,25 +6,25 @@
 #include "algorithms/fd/pyro/pyro.h"
 #include "algorithms/fd/tane/tane.h"
 #include "all_csv_configs.h"
+#include "benchmark_controller.h"
 #include "config/max_lhs/type.h"
 #include "config/names.h"
 #include "config/thread_number/type.h"
-#include "performance_testing.h"
 
-namespace perf_tests {
+namespace benchmark {
 
-inline void FDPerfTests() {
+inline void FDBenchmark() {
     using namespace config::names;
 
-    auto& testing = PerformanceTesting::Instance();
+    auto& controller = BenchmarkController::Instance();
 
-    testing.RegisterSimpleTest<algos::hyfd::HyFD>(
+    controller.RegisterSimpleTest<algos::hyfd::HyFD>(
             tests::kIowa650k,
             {{kThreads, static_cast<config::ThreadNumType>(1)},
              {kMaximumLhs, static_cast<config::MaxLhsType>(2)}},
             "", 25);
 
-    testing.RegisterSimpleTest<algos::Pyro>(
+    controller.RegisterSimpleTest<algos::Pyro>(
             tests::kIowa550k,
             {{kError, static_cast<config::ErrorType>(0.0)},
              {kSeed, static_cast<decltype(algos::pyro::Parameters::seed)>(0)},
@@ -37,7 +37,7 @@ inline void FDPerfTests() {
         auto const& dataset = measure == +algos::AfdErrorMeasure::mu_plus
                                       ? tests::kMushroomPlus3attr1500
                                       : tests::kMushroomPlus4attr1300;
-        testing.RegisterSimpleTest<algos::Tane>(
+        controller.RegisterSimpleTest<algos::Tane>(
                 dataset,
                 {{kError, static_cast<config::ErrorType>(0.95)}, {kAfdErrorMeasure, measure}},
                 measure._to_string(), 15);
@@ -50,7 +50,7 @@ inline void FDPerfTests() {
                                                {{kCustomRandom, std::optional<int>{47}}}, "", 20);
 #endif
 
-    testing.RegisterSimpleTest<algos::Aid>(tests::kIowa1kk, {}, "", 15);
+    controller.RegisterSimpleTest<algos::Aid>(tests::kIowa1kk, {}, "", 15);
 }
 
-}  // namespace perf_tests
+}  // namespace benchmark

@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: |
           export CXX=g++-10
-          ./build.sh --perf-tests --no-tests
+          ./build.sh --benchmark --no-tests
 
       - name: Get run IDs
         run: |
@@ -85,7 +85,7 @@ jobs:
       - name: Test
         working-directory: ${{github.workspace}}/build/target
         run: |
-          ./Desbordante_perf_test ${{ github.workspace }}/latest.json \
+          ./Desbordante_benchmark ${{ github.workspace }}/latest.json \
             ${{ github.workspace }}/curr-results.json
       # All next steps should be runned even if this one has failed
       # Some of them may fail in that case, but it's not a problem
@@ -99,7 +99,7 @@ jobs:
         run: |
           python3 -m venv .venv
           .venv/bin/python3 -m pip install matplotlib
-          .venv/bin/python3 src/tests/performance_tests/display_performance_tests.py old-results \
+          .venv/bin/python3 src/tests/benchmark/display_benchmark.py old-results \
             curr-results.json plots.pdf
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
