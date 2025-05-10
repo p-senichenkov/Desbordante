@@ -9,16 +9,16 @@
 #include "all_csv_configs.h"
 #include "config/names.h"
 #include "config/thread_number/type.h"
-#include "performance_testing.h"
+#include "benchmark_controller.h"
 
-namespace perf_tests {
+namespace benchmark {
 
-inline void MDPerfTests() {
+inline void MDBenchmark() {
     using namespace config::names;
     using namespace algos::hymd;
     using preprocessing::column_matches::Levenshtein;
 
-    auto& testing = PerformanceTesting::Instance();
+    auto& controller = BenchmarkController::Instance();
 
     auto test = [] {
         constexpr static model::md::DecisionBoundary kMinSimilarity = 0.7;
@@ -42,7 +42,7 @@ inline void MDPerfTests() {
         algo->Execute();
     };
 
-    testing.RegisterTest(std::move(test), "HyMD, CIPublicHighway20attr55k");
+    controller.RegisterTest(std::move(test), "HyMD, CIPublicHighway20attr55k");
 }
 
-}  // namespace perf_tests
+}  // namespace benchmark

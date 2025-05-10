@@ -14,7 +14,7 @@ Possible options:
               --deps-only             Install dependencies only (don't build)
   -p,         --pybind                Compile python bindings
   -n,         --no-tests              Don't build tests
-  -T          --perf-tests            Build performance tests
+  -T          --benchmark             Build benchmarks
   -u,         --no-unpack             Don't unpack datasets
   -j[N],      --parallel[N]           The maximum number of concurrent processes for building
   -d,         --debug                 Set debug build type
@@ -44,8 +44,8 @@ for i in "$@"; do
         -n | --no-tests)
             NO_TESTS=true
             ;;
-        -T|--perf-tests) # Build performance tests
-            PERF_TESTS=true
+        -T|--benchmark) # Build benchmarks
+            BENCHMARK=true
             ;;
         # Don't unpack datasets
         -u | --no-unpack)
@@ -129,8 +129,8 @@ else
     fi
 fi
 
-if [[ $PERF_TESTS == true ]]; then
-    PREFIX="$PREFIX -D COMPILE_PERFORMANCE_TESTS=ON"
+if [[ $BENCHMARK == true ]]; then
+    PREFIX="$PREFIX -D COMPILE_BENCHMARKS=ON"
 fi
 
 if [[ $DEPS_ONLY == true ]]; then

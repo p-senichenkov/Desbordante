@@ -1,9 +1,9 @@
 set(UNIT_TEST_BINARY ${CMAKE_PROJECT_NAME}_test)
-set(PERF_TEST_BINARY ${CMAKE_PROJECT_NAME}_perf_test)
+set(BENCHMARK_BINARY ${CMAKE_PROJECT_NAME}_benchmark)
 
 file(GLOB common_sources "common/*.h" "common/*.cpp")
 file(GLOB unit_test_sources "unit/*.h" "unit/*.cpp")
-file(GLOB perf_test_sources "performance_tests/*.h" "performance_tests/*.cpp")
+file(GLOB benchmark_sources "benchmark/*.h" "benchmark/*.cpp")
 
 if (COMPILE_TESTS)
     enable_testing()
@@ -21,14 +21,14 @@ if (COMPILE_TESTS)
     gtest_discover_tests(${UNIT_TEST_BINARY} WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endif()
 
-if (COMPILE_PERFORMANCE_TESTS)
-    add_executable(${PERF_TEST_BINARY} ${common_sources} ${perf_test_sources})
+if (COMPILE_BENCHMARKS)
+	add_executable(${BENCHMARK_BINARY} ${common_sources} ${benchmark_sources})
 
     # include "tests/common" directory for header inclusion
-    target_include_directories(${PERF_TEST_BINARY} PRIVATE "common")
+    target_include_directories(${BENCHMARK_BINARY} PRIVATE "common")
 
     # linking with implemented classes
-    target_link_libraries(${PERF_TEST_BINARY} PRIVATE ${CMAKE_PROJECT_NAME})
+    target_link_libraries(${BENCHMARK_BINARY} PRIVATE ${CMAKE_PROJECT_NAME})
 endif()
 
 add_custom_target(copy-files ALL

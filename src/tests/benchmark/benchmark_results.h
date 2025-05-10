@@ -6,29 +6,23 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <unordered_map>
 
 #include <boost/json/src.hpp>
 
-namespace perf_tests::util {
+namespace benchmark::util {
 
-class PerformanceTestsResults {
+class BenchmarkResults {
 public:
-    /// @brief Load performance test results saved with @c Save().
+    /// @brief Load benchmark results saved with @c Save().
     /// @param filename must point to a @b valid JSON of exact this format: {"HyFD": 30000, ...}
     /// @note Some checks are performed, but don't expect too much.
     static std::unordered_map<std::string, long long> Load(std::string_view filename) {
         std::filesystem::path file_path{filename};
         std::ifstream file{file_path};
 
-        if (!file.is_open()) {
-            // It's not always no_such_file_or_directory, but there's no generic file error,
-            // neither a simple way to know what's wrong
-            throw std::filesystem::filesystem_error{
-                    "Load: Cannot open file for reading", file_path,
-                    std::make_error_code(std::errc::no_such_file_or_directory)};
-        }
+        // This thing will throw file's stored exception, if one
+        file.exceptions(file.rdstate());
 
         // This form of parse throws exceptions
         boost::json::value value = boost::json::parse(file);
@@ -57,24 +51,19 @@ public:
         return results;
     }
 
-    /// @brief Save performance test results to be read with Load() later.
+    /// @brief Save benchmark results to be read with Load() later.
     /// @note Some checks are performed, but don't expect too much.
     static void Save(std::unordered_map<std::string, long long> const& results,
                      std::string_view filename) {
         std::filesystem::path file_path{filename};
         std::ofstream file{file_path};
 
-        if (!file.is_open()) {
-            // It's not always no_such_file_or_directory, but there's no generic file error,
-            // neither a simple way to know what's wrong
-            throw std::filesystem::filesystem_error{
-                    "Load: Cannot open file for reading", file_path,
-                    std::make_error_code(std::errc::no_such_file_or_directory)};
-        }
+        // This thing will throw file's stored exception, if one
+        file.exceptions(file.rdstate());
 
         boost::json::object top_level_obj{results.begin(), results.end()};
         file << top_level_obj << '\n';
     }
 };
 
-}  // namespace perf_tests::util
+}  // namespace benchmark::util

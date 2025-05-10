@@ -17,18 +17,18 @@
 #include "config/names.h"
 #include "parser/csv_parser/csv_parser.h"
 
-namespace perf_tests {
+namespace benchmark {
 
-/// @brief A singleton that controls execution of performance tests.
+/// @brief A singleton that controls execution of benchmarks.
 /// @note Most likely you'll need only these methods: @c Instance, @c RegisterSimpleTest and
 /// @c RegisterTest.
-class PerformanceTesting {
+class BenchmarkController {
 private:
     std::unordered_map<std::string, long long> prev_results_;
     std::unordered_map<std::string, long long> results_;
     std::vector<std::function<bool()>> tests_;
 
-    PerformanceTesting() = default;
+    BenchmarkController() = default;
 
     /// @brief Demangle name and take only class name (without namespaces).
     std::string GetAlgoName(std::string mangled_name) {
@@ -40,7 +40,7 @@ private:
         return demangled_name.substr(colon_pos + 1);
     }
 
-    /// @note Returned object lives no longer than this PerformanceTesting object.
+    /// @note Returned object lives no longer than this BenchmarkController object.
     template <typename Body>
     std::function<bool()> WrapTest(Body&& test_body, std::string const& test_name,
                                    unsigned char threshold = 10 /* per cent */) {
@@ -53,7 +53,7 @@ private:
                                    .count();
             results_.emplace(test_name, elapsed);
             std::cout << "** " << test_name << ": " << elapsed / 1000 << "s: ";
-            // Assume that performance test cannot run 0ms
+            // Assume that benchmark cannot run 0ms
             if (prev_results_.contains(test_name) && prev_results_[test_name] != 0) {
                 auto prev_res = prev_results_[test_name];
                 auto overhead = static_cast<double>(elapsed - prev_res) / prev_res * 100;
@@ -68,15 +68,15 @@ private:
     }
 
 public:
-    PerformanceTesting(PerformanceTesting&) = delete;
-    PerformanceTesting(PerformanceTesting&&) = default;
-    PerformanceTesting& operator=(PerformanceTesting&) = delete;
-    PerformanceTesting& operator=(PerformanceTesting&&) = default;
-    ~PerformanceTesting() = default;
+    BenchmarkController(BenchmarkController&) = delete;
+    BenchmarkController(BenchmarkController&&) = default;
+    BenchmarkController& operator=(BenchmarkController&) = delete;
+    BenchmarkController& operator=(BenchmarkController&&) = default;
+    ~BenchmarkController() = default;
 
-    /// @brief Get an instance of @c PerformanceTesting.
-    static PerformanceTesting& Instance() {
-        static PerformanceTesting instance;
+    /// @brief Get an instance of @c BenchmarkController.
+    static BenchmarkController& Instance() {
+        static BenchmarkController instance;
         return instance;
     }
 
@@ -151,7 +151,7 @@ public:
         return results_;
     }
 
-    /// @brief Save single performance test result.
+    /// @brief Save single benchmark result.
     /// @note This method should be used @b only with @c RegisterCustomTest
     void EmplaceResult(std::string const& test_name, long long result) {
         results_.emplace(test_name, result);
@@ -164,4 +164,4 @@ public:
     }
 };
 
-}  // namespace perf_tests
+}  // namespace benchmark
