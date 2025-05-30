@@ -1,5 +1,10 @@
 name: Performance regression testing
 on:
+  # XXX: Remove before merging
+  # This will activate workflow each time branch is pushed -- can lead to a lot of runs,
+  # but I want these runs to be visible on PR, not only in fork.
+  # NOTE: workflow will continue to fail until token is created.
+  push:
   # This workflow runs performance regression tests:
   # - Automatically every Saturday at 3:30 AM (using `shedule` trigger).
   # - Manually on demand using `workflow_dispatch` trigger.
