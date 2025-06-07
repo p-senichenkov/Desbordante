@@ -13,12 +13,10 @@
 
 namespace benchmark {
 
-inline void MDBenchmark() {
+inline void MDBenchmark(BenchmarkController& controller) {
     using namespace config::names;
     using namespace algos::hymd;
     using preprocessing::column_matches::Levenshtein;
-
-    auto& controller = BenchmarkController::Instance();
 
     auto test = [] {
         constexpr static model::md::DecisionBoundary kMinSimilarity = 0.7;

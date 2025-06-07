@@ -6,8 +6,8 @@
 
 namespace benchmark {
 
-inline void DDBenchmark() {
-    BenchmarkController::Instance().RegisterSimpleTest<algos::dd::Split>(tests::kAdult9attr);
+inline void DDBenchmark(BenchmarkController& controller) {
+    controller.RegisterSimpleTest<algos::dd::Split>(tests::kAdult9attr);
 }
 
 }  // namespace benchmark

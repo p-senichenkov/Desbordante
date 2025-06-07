@@ -6,8 +6,8 @@
 
 namespace benchmark {
 
-inline void ADCBenchmark() {
-    BenchmarkController::Instance().RegisterSimpleTest<algos::dc::FastADC>(tests::kNeighbors120k);
+inline void ADCBenchmark(BenchmarkController& controller) {
+    controller.RegisterSimpleTest<algos::dc::FastADC>(tests::kNeighbors120k);
 }
 
 }  // namespace benchmark

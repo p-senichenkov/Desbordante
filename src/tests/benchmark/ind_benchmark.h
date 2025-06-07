@@ -13,10 +13,8 @@
 
 namespace benchmark {
 
-inline void INDBenchmark() {
+inline void INDBenchmark(BenchmarkController& controller) {
     using namespace config::names;
-
-    auto& controller = BenchmarkController::Instance();
 
     // FAIDA tests are currently disabled, since test below runs 10 seconds, and for reasonable
     // run times we need really huge dataset

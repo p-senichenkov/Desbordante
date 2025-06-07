@@ -13,10 +13,8 @@
 
 namespace benchmark {
 
-inline void FDBenchmark() {
+inline void FDBenchmark(BenchmarkController& controller) {
     using namespace config::names;
-
-    auto& controller = BenchmarkController::Instance();
 
     controller.RegisterSimpleTest<algos::hyfd::HyFD>(
             tests::kIowa650k,

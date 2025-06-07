@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
     el::Loggers::configureFromGlobal("logging.conf");
 
-    auto& controller = BenchmarkController::Instance();
+    BenchmarkController controller;
 
     std::unordered_map<std::string, long long> prev_results;
     if (argc >= 2) {
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 
     for (auto test_register_func :
          {ADCBenchmark, DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark}) {
-        test_register_func();
+        test_register_func(controller);
     }
 
     auto success = controller.RunAllTests();

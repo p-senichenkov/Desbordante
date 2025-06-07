@@ -22,13 +22,12 @@ namespace benchmark {
 /// @brief A singleton that controls execution of benchmarks.
 /// @note Most likely you'll need only these methods: @c Instance, @c RegisterSimpleTest and
 /// @c RegisterTest.
+// FIXME: not singleton
 class BenchmarkController {
 private:
     std::unordered_map<std::string, long long> prev_results_;
     std::unordered_map<std::string, long long> results_;
     std::vector<std::function<bool()>> tests_;
-
-    BenchmarkController() = default;
 
     /// @brief Demangle name and take only class name (without namespaces).
     std::string GetAlgoName(std::string mangled_name) {
@@ -68,18 +67,6 @@ private:
     }
 
 public:
-    BenchmarkController(BenchmarkController&) = delete;
-    BenchmarkController(BenchmarkController&&) = default;
-    BenchmarkController& operator=(BenchmarkController&) = delete;
-    BenchmarkController& operator=(BenchmarkController&&) = default;
-    ~BenchmarkController() = default;
-
-    /// @brief Get an instance of @c BenchmarkController.
-    static BenchmarkController& Instance() {
-        static BenchmarkController instance;
-        return instance;
-    }
-
     /// @brief Load results of previous run.
     /// @note It's unlikely that you'll need to call this method.
     void LoadPreviousResults(std::unordered_map<std::string, long long>&& prev_res) {

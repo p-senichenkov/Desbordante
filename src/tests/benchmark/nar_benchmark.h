@@ -9,10 +9,10 @@
 
 namespace benchmark {
 
-inline void NARBenchmark() {
+inline void NARBenchmark(BenchmarkController& controller) {
     using namespace config::names;
 
-    BenchmarkController::Instance().RegisterSimpleTest<algos::des::DES>(
+    controller.RegisterSimpleTest<algos::des::DES>(
             tests::kAdult, {{kMinimumSupport, 0.0},
                             {kMinimumConfidence, 0.0},
                             {kPopulationSize, static_cast<unsigned>(std::pow(10, 5))},
