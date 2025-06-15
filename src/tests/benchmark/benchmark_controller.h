@@ -19,10 +19,8 @@
 
 namespace benchmark {
 
-/// @brief A singleton that controls execution of benchmarks.
-/// @note Most likely you'll need only these methods: @c Instance, @c RegisterSimpleTest and
-/// @c RegisterTest.
-// FIXME: not singleton
+/// @brief Controls execution of benchmarks.
+/// @note Most likely you'll need only these methods: @c RegisterSimpleTest and @c RegisterTest.
 class BenchmarkController {
 private:
     std::unordered_map<std::string, long long> prev_results_;
@@ -115,11 +113,11 @@ public:
     /// @note @c other_params should not contain csv config (otherwise it will be overwritten).
     template <typename Algo>
     void RegisterSimpleTest(CSVConfig const& csv, algos::StdParamsMap&& other_params = {},
-                            std::string const& name_appendix = "", unsigned char threshold = 10) {
+                            std::string const& name_suffix = "", unsigned char threshold = 10) {
         std::ostringstream name;
         name << GetAlgoName(typeid(Algo).name()) << ", " << csv.path.stem().string();
-        if (!name_appendix.empty()) {
-            name << ", " << name_appendix;
+        if (!name_suffix.empty()) {
+            name << ", " << name_suffix;
         }
 
         other_params[config::names::kCsvConfig] = csv;

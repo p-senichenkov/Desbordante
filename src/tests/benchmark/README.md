@@ -11,14 +11,11 @@ Then you'll need to add file `src/tests/benchmark/XX_benchmark.h` with following
 ```C++
 #pragma once
 
-// There's a singleton `BenchmarkController` that controls execution of all benchmarks.
+// There's a `BenchmarkController` that controls execution of all benchmarks.
 // It lives in `src/tests/benchmark/benchmark_controller.h`:
 #include "benchmark_controller.h"
 
-void XXBenchmark {
-    // Obtain an instance:
-    auto& instance = tests::BenchmarkController::Instance();
-
+void XXBenchmark(benchmark::BenchmarkController& controller) {
     // Test body. Will be further discussed
 }
 ```
@@ -27,7 +24,7 @@ Then this function must be added to `src/tests/benchmark/main.cpp`:
 ```C++
 // line 33:
     for (auto test_register_func : {/* other tests */, XXBenchmark}) {
-        test_register_func();
+        test_register_func(controller);
     }
 ```
 
@@ -36,19 +33,17 @@ Then this function must be added to `src/tests/benchmark/main.cpp`:
 Consider you want to add a test that simply executes algorithm.
 Then `XXBenchmark` will look like this:
 ```C++
-void XXBenchmark {
-    // Obtain an instance:
-    auto& instance = tests::BenchmarkController::Instance();
+void XXBenchmark(BenchmarkController& controller) {
     algos::StdParamsMap params = {/* algo parameters */};
-    // Arguments are: CSVConfig, other algo parameters, test name appendix and threshold
-    instance.RegisterSimpleTest(kHugeDataset, std::move(params), "simple", 15 /* per cent */);
+    // Arguments are: CSVConfig, other algo parameters, test name suffix and threshold
+    controller.RegisterSimpleTest(kHugeDataset, std::move(params), "simple", 15 /* per cent */);
 }
 ```
 
 This will create test named "`XXMiner, huge_dataset, simple`" that creates `XXMiner` instance
 with `params` parameters and calls `Execute`.
 
-Name appendix is optional and can be used when you need several tests on one algo (for example,
+Name suffix is optional and may be useful when you need several tests on one algo (for example,
 using different error measures).
 
 Time threshold for this test will be 15%. If not specified, it defaults to 10%.
@@ -60,15 +55,13 @@ For examples, see `fd_benchmark.h`.
 Now, consider you want to do some preparation before calling `Execute`.
 For this purpose `BenchmarkController` has `RegisterTest` method:
 ```C++
-void XXBenchmark {
-    // Obtain an instance:
-    auto& instance = tests::BenchmarkController::Instance();
+void XXBenchmark(BenchmarkController& controller) {
     auto test = [/* note that this object lives longer than XXBenchmark.
                  Don't capture things by reference */] {
         // Some preparation
         algo.Execute();
     };
-    instance.RegisterTest(std::move(test), "XXMiner, huge_dataset", 15 /* per cent */);
+    controller.RegisterTest(std::move(test), "XXMiner, huge_dataset", 15 /* per cent */);
 }
 ```
 
@@ -84,7 +77,7 @@ Its first parameter is executable, that measures time, saves results, compares t
 previous run on its own (see methods `EmplaceResult` and `GetPrevResults`) and returns 
 `true` if time is good, and `false` otherwise.
 
-`BenchmarkController` does no work now, except for calling you test.
+`BenchmarkController` does no work now, except for calling your test.
 
 You shouldn't use this way, until you really know what you're doing.
 
