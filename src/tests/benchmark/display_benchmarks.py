@@ -1,52 +1,95 @@
+''' Benchmark results visualization tool
+
+This script processes JSON files containing benchmark results and generates a
+PDF report with time series plots for each algorithm.
+
+Input:
+- Directory with previous JSON results (named 1.json, 2.json, etc.)
+- Current run results JSON file
+Output:
+- PDF file with plots showing metric trends over time
+
+Example usage:
+    python performance_plots.py results/ latest.json report.pdf
+'''
+
 from os import scandir
 from sys import argv
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from json import load as j_load
+from pathlib import Path
 
 # Read serialized results from JSON file
 def read_results(filename: str) -> dict[str: int]:
     with open(filename, 'r') as file:
         return {algo['name'] : algo['time'] for algo in j_load(file)}
 
-def read_all_results(dir: str) -> list[dict[str, int]]:
+def read_all_results(directory: str) -> list[dict[str, int]]:
+    '''Read all results from directory sorted by recency.
+
+    Args:
+        directory: Path to directory with JSON results files
+
+    Returns:
+        List of results dictionaries, most recent first
+    '''
     all_results = []
-    # Files have names like "3.json", ordered by recency (most recent first)
-    for fd in sorted(scandir(dir), key=lambda x: x.name, reverse=True):
-        if fd.is_file():
-            all_results.append(read_results(fd.path))
+    try:
+        # Sort numerically by filename (without extension)
+        for fd in sorted(
+            scandir(directory), 
+            key=lambda x: int(Path(x.name).stem), 
+            reverse=True
+        ):
+            if fd.is_file() and fd.name.endswith('.json'):
+                all_results.append(read_results(fd.path))
+    except (FileNotFoundError, PermissionError) as e:
+        raise RuntimeError(f'Failed to scan results directory {directory}') from e
+
     return all_results
 
 def build_plot(results: list[dict[str, int]], name: str, pages: PdfPages) -> None:
+    '''Build and save a plot for specific algorithm.
+
+    Args:
+        results: List of test results
+        name: Name of the algorithm
+        pages: PdfPages object to save the plot to
+    '''
     points = []
     for res in results:
         points.append(res.get(name, 0) / 1000)
 
-    _, ax = plt.subplots()
+    fig, ax = plt.subplots()
     ax.stairs(points)
     ax.set_title(name)
     ax.set_xlabel('Run number')
     ax.set_ylabel('Time, s')
-    pages.savefig()
+    ax.grid(visible=True, linestyle='--', alpha=0.7)
 
-# Arguments:
-# 1. directory with test results
-# 2. current run results
-# 3. filename to store plots
-def main():
-    if len(argv) >= 4:
-        results = read_all_results(argv[1])
-        last_res = read_results(argv[2])
-        results.append(last_res)
+    pages.savefig(fig)
+    plt.close(fig)
 
-        pdf = PdfPages(argv[3])
+def main() -> None:
+    '''Main function to generate performance plots.
 
+    Expects 3 command line arguments:
+    1. Directory with test results
+    2. Current run results file
+    3. Output PDF filename
+    '''
+    if len(argv) != 4:
+        print('Usage: python3 display_benchmarks.py <old_results> <curr_result.json> <out.pdf>')
+        exit(1)
+
+    results = read_all_results(argv[1])
+    last_res = read_results(argv[2])
+    results.append(last_res)
+
+    with PdfPages(argv[3]) as pdf:
         for name in last_res:
             build_plot(results, name, pdf)
-        pdf.close()
-    else:
-        print('Please, provide 3 parameters')
-        exit(1)
 
 if __name__ == '__main__':
     main()
