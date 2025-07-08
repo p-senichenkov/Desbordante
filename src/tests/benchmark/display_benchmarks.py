@@ -49,11 +49,13 @@ def read_all_results(directory: str) -> list[dict[str, int]]:
 
     return all_results
 
-def build_plot(results: list[dict[str, int]], name: str, pages: PdfPages) -> None:
+def build_plot(results: list[dict[str, int]], baseline: dict[str, int], name: str,
+               pages: PdfPages) -> None:
     '''Build and save a plot for specific algorithm.
 
     Args:
         results: List of test results
+        baseline: Baseline test results (last successful run)
         name: Name of the algorithm
         pages: PdfPages object to save the plot to
     '''
@@ -62,34 +64,42 @@ def build_plot(results: list[dict[str, int]], name: str, pages: PdfPages) -> Non
         points.append(res.get(name, 0) / 1000)
 
     fig, ax = plt.subplots()
-    ax.stairs(points)
+    ax.stairs(points, fill=True, label='Results')
     ax.set_title(name)
     ax.set_xlabel('Run number')
     ax.set_ylabel('Time, s')
     ax.grid(visible=True, linestyle='--', alpha=0.7)
 
+    if name in baseline:
+        ax.stairs([baseline[name] / 1000 for i in range(len(results))], hatch='//',
+                  label='Baseline')
+
+    ax.legend()
     pages.savefig(fig)
     plt.close(fig)
 
 def main() -> None:
     '''Main function to generate performance plots.
 
-    Expects 3 command line arguments:
+    Expects 4 command line arguments:
     1. Directory with test results
-    2. Current run results file
-    3. Output PDF filename
+    2. Baseline results JSON
+    3. Current run results JSON
+    4. Output PDF filename
     '''
-    if len(argv) != 4:
-        print('Usage: python3 display_benchmarks.py <old_results> <curr_result.json> <out.pdf>')
+    if len(argv) != 5:
+        print('Usage: python3 display_benchmarks.py <old_results> <baseline.json> '
+              '<curr_result.json> <out.pdf>')
         exit(1)
 
     results = read_all_results(argv[1])
-    last_res = read_results(argv[2])
+    baseline = read_results(argv[2])
+    last_res = read_results(argv[3])
     results.append(last_res)
 
-    with PdfPages(argv[3]) as pdf:
+    with PdfPages(argv[4]) as pdf:
         for name in last_res:
-            build_plot(results, name, pdf)
+            build_plot(results, baseline, name, pdf)
 
 if __name__ == '__main__':
     main()

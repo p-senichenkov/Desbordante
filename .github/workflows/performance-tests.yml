@@ -2,7 +2,7 @@ name: Performance regression testing
 on:
   push:
   # This workflow runs performance regression tests:
-  # - Automatically every Saturday at 3:30 AM (using `shedule` trigger).
+  # - Automatically every Saturday at 3:30 AM (using `schedule` trigger).
   # - Manually on demand using `workflow_dispatch` trigger.
   # Note: `schedule` trigger only activates on `main` branch.
   schedule:
@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # Cancel in-progress runs when a new workflow with the same group name is triggered
   cancel-in-progress: true
+
+# NOTE: all results JSONs (including baseline) are very format-dependent,
+# so don't forget to update version tags each time format is changed
 
 jobs:
   performance-tests:
@@ -34,12 +37,14 @@ jobs:
         run: |
           export CXX=g++-10
           ./build.sh --benchmark --no-tests
+
       - name: Get previous results
         run: |
           echo ${{ secrets.PERFORMANCEREGRESSIONTESTING }} | gh auth login --with-token
 
           gh run list --repo "${{ github.repository }}" --limit ${{ env.num-runs }} \
-            --workflow "${{ github.workflow }}" --json 'databaseId' --jq '[.[].databaseId]' >ids.json
+            --workflow "${{ github.workflow }}" --json 'databaseId' --jq '[.[].databaseId]'
+            >ids.json
 
           mkdir -p old-results
           for (( i = 0; i < ${{ env.num-runs }}; i = $i + 1 )); do
@@ -49,6 +54,7 @@ jobs:
               mv curr-results.json old-results/$i.json || /bin/true
             rm -rf results-v1.json
           done
+
       - name: Get latest log
         run: |
           if [[ -a old-results/* ]]; then
@@ -58,12 +64,39 @@ jobs:
             echo "No artifacts found!"
             echo '[]' > latest.json
           fi
+
+      - name: Get latest successful job ID
+        run: |
+          echo ${{ secrets.PERFORMANCEREGRESSIONTESTING }} | gh auth login --with-token
+
+          {
+            echo 'LastSuccID<<EOF'
+            gh run list --repo "${{ github.repository }}" --limit 1 \
+              --status success --workflow "${{ github.workflow }}" --json 'databaseId' \
+              --jq '.[].databaseId'
+            echo 'EOF'
+          } >>"$GITHUB_ENV"
+      - name: Get baseline results
+        uses: actions/download-artifact@v4
+        with:
+          # For some reason there's no "when not found" parameter,
+          # but job don't fail if `name` is replaced with `pattern`
+          pattern: baseline-v1.json
+          run-id: ${{ env.LastSuccID }}
+          github-token: ${{ secrets.PERFORMANCEREGRESSIONTESTING }}
+      - name: Check baseline results
+        # Each successful run must have a "baseline" attached.
+        # If not, there's no baseline at all; use latest instead.
+        # Note: such behaviour can be used to manually update baseline in case of some problems
+        run: cp baseline-v1.json/baseline.json baseline.json || cp latest.json baseline.json
+
       - name: Test
         working-directory: ${{github.workspace}}/build/target
         run: |
-          ./Desbordante_benchmark ${{ github.workspace }}/latest.json \
+          ./Desbordante_benchmark ${{ github.workspace }}/baseline.json \
             ${{ github.workspace }}/curr-results.json
-      # All next steps should be runned even if this one has failed
+
+      # All next steps should be ran even if this one has failed
       # Some of them may fail in that case, but it's not a problem
       - uses: actions/upload-artifact@v4
         with:
@@ -75,7 +108,7 @@ jobs:
         run: |
           python3 -m venv .venv
           .venv/bin/python3 -m pip install matplotlib
-          .venv/bin/python3 src/tests/benchmark/display_benchmarks.py old-results \
+          .venv/bin/python3 src/tests/benchmark/display_benchmarks.py old-results baseline.json \
             curr-results.json plots.pdf
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
@@ -84,3 +117,14 @@ jobs:
           path: ${{ github.workspace }}/plots.pdf
           if-no-files-found: error
         if: ${{ !cancelled() }}
+
+      # If tests are successful, current result becomes baseline.
+      # Otherwise, baseline is simply being duplicated.
+      - name: Update baseline
+        run: cp curr-results.json baseline.json
+        if: success()
+      - name: Upload baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-v1.json
+          path: baseline.json
