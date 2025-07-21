@@ -70,6 +70,7 @@ jobs:
             -Dgtest_disable_pthreads=OFF \
             -DASAN=OFF \
             -DPYTHON=COMPILE \
+            -DCOMPILE_BENCHMARKS=ON \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCPM_SOURCE_CACHE=~/cpm-cache \
             -S . -B ${{github.workspace}}/build
