@@ -1,7 +1,8 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <easylogging++.h>
+// FIXME(senichenkov): must fix it, not just disable linter
+#include <easylogging++.h>  // NOLINT
 
 #include "adc_benchmark.h"
 #include "benchmark_comparer.h"
@@ -18,7 +19,7 @@ INITIALIZE_EASYLOGGINGPP
 // Expected arguments (both are optional):
 // 1. file with previous benchmark results
 // 2. file to save current benchmark results
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {  // NOLINT
     using namespace benchmark;
 
     el::Loggers::configureFromGlobal("logging.conf");
