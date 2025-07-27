@@ -10,7 +10,7 @@ set(BENCHMARK_BINARY ${CMAKE_PROJECT_NAME}_benchmark)
 # Auto-collect test sources
 file(GLOB common_sources "common/*.h" "common/*.cpp")
 file(GLOB unit_test_sources "unit/*.h" "unit/*.cpp")
-file(GLOB benchmark_sources "benchmark/*.h" "benchmark/*.cpp")
+file(GLOB benchmark_sources "benchmark/*.cpp")
 
 if (COMPILE_TESTS)
 	enable_testing()
@@ -45,6 +45,7 @@ if (COMPILE_BENCHMARKS)
 	# ---- Benchmark Dependencies ----
 
     target_include_directories(${BENCHMARK_BINARY} PRIVATE "common")
+	target_include_directories(${BENCHMARK_BINARY} PRIVATE "${easyloggingpp_SOURCE_DIR}/src")
 
 	# Link benchmark executable with:
 	# PRIVATE:
