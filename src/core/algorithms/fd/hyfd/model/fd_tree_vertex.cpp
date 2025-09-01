@@ -10,9 +10,9 @@ namespace algos::hyfd::fd_tree {
 void FDTreeVertex::GetLevelRecursive(unsigned target_level, unsigned cur_level,
                                      boost::dynamic_bitset<> lhs, std::vector<LhsPair>& vertices) {
     if (cur_level == target_level) {
-        if (fds_.any()) {
+        // if (fds_.any()) {
             vertices.emplace_back(shared_from_this(), lhs);
-        }
+        // }
         return;
     }
 
