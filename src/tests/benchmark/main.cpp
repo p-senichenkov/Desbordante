@@ -75,3 +75,4 @@ int main(int argc, char* argv[]) {
 // Without if 3
 // Without if 5
 // Without if 6
+// Without if 7
