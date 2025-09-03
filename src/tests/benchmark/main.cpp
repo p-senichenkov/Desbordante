@@ -70,3 +70,4 @@ int main(int argc, char* argv[]) {
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+// Without if 1
