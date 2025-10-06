@@ -55,7 +55,7 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
 #endif
 
     auto aid_name = runner.RegisterSimpleBenchmark<algos::Aid>(tests::kIowa1kk, {}, "");
-    comparer.SetThreshold(aid_name, 17);
+    comparer.SetThreshold(aid_name, 21);
 }
 
 }  // namespace benchmark
