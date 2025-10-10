@@ -15,6 +15,7 @@
 #include "core/algorithms/metric/enums.h"
 #include "core/algorithms/nar/des/enums.h"
 #include "core/algorithms/od/fastod/od_ordering.h"
+#include "core/algorithms/pac/model/idomain.h"
 #include "core/config/custom_random_seed/type.h"
 #include "core/config/equal_nulls/type.h"
 #include "core/config/error/type.h"
@@ -45,6 +46,7 @@ std::unordered_map<std::type_index, ConvFunction> const kConverters{
         kNormalConvPair<unsigned int>,
         kNormalConvPair<bool>,
         kNormalConvPair<std::vector<std::string>>,
+        kNormalConvPair<std::vector<double>>,
         kNormalConvPair<config::ThreadNumType>,
         kNormalConvPair<config::CustomRandomSeedType>,
         kNormalConvPair<config::MaxLhsType>,
@@ -52,6 +54,7 @@ std::unordered_map<std::type_index, ConvFunction> const kConverters{
         kNormalConvPair<config::IndicesType>,
         kNormalConvPair<model::DDString>,
         kNormalConvPair<model::Gdd>,
+        kNormalConvPair<std::shared_ptr<pac::model::IDomain>>,
         kEnumConvPair<algos::metric::MetricAlgo>,
         kEnumConvPair<algos::metric::Metric>,
         kEnumConvPair<model::InputFormatType>,
