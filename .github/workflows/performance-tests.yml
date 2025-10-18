@@ -51,8 +51,10 @@ jobs:
           mkdir -p old-results
           for (( i = 0; i < ${{ env.num-runs }}; i = $i + 1 )); do
             ID=$(jq ".[$i]" ids.json)
+            STARTED_AT=$(gh run view "$ID" --repo "${{ github.repository }}" --json 'startedAt' \
+              --jq '.startedAt')
             # Don't fail on error
-            echo "$ID"
+            echo "$ID (started at $STARTED_AT)"
             gh run download "$ID" --name 'results-v1.json' --repo "${{ github.repository }}" && \
               cat curr-results.json && \
               mv curr-results.json old-results/$i.json || /bin/true
