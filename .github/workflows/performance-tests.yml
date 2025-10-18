@@ -8,6 +8,7 @@ on:
     - cron: 30 3 * * 6
   workflow_dispatch:
   push:
+  pull_request:
 
 concurrency:
   # ref will be always the same (`main`) for schedule, and can be set manually for workflow-dispatch
