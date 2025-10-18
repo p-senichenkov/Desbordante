@@ -51,6 +51,11 @@ jobs:
           mkdir -p old-results
           for (( i = 0; i < ${{ env.num-runs }}; i = $i + 1 )); do
             ID=$(jq ".[$i]" ids.json)
+            if [[ "$ID" = 'null' ]]; then
+              echo "No ID numbered $i"
+              continue
+            fi
+
             STARTED_AT=$(gh run view "$ID" --repo "${{ github.repository }}" --json 'startedAt' \
               --jq '.startedAt')
             # Don't fail on error
