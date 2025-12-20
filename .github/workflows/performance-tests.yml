@@ -59,11 +59,11 @@ jobs:
               --jq '.startedAt')
             # Don't fail on error
             echo "$ID (started at $STARTED_AT)"
-            gh run download "$ID" --name 'results-v2.json' --repo "${{ github.repository }}" && \
+            gh run download "$ID" --name 'results-v2' --repo "${{ github.repository }}" && \
               cat curr-results.json && \
               mv curr-results.json old-results/$i.json || /bin/true
 
-            rm -rf results-v2.json
+            rm -rf results-v2
           done
 
       - name: Get latest successful job ID
@@ -82,7 +82,7 @@ jobs:
         with:
           # For some reason there's no "when not found" parameter,
           # but job don't fail if `name` is replaced with `pattern`
-          pattern: baseline-v2.json
+          pattern: baseline-v2
           run-id: ${{ env.LastSuccID }}
           github-token: ${{ secrets.PERFORMANCEREGRESSIONTESTING }}
         if: ${{ env.LastSuccID != '' }}
@@ -91,8 +91,8 @@ jobs:
         # If not, there's no baseline at all; use latest instead.
         # Note: such behaviour can be used to manually update baseline in case of some problems
         run: |
-          if [[ -a 'baseline-v2.json/baseline.json' ]]; then
-            cp baseline-v2.json/baseline.json baseline.json
+          if [[ -a 'baseline-v2/baseline.json' ]]; then
+            cp baseline-v2/baseline.json baseline.json
           elif [ -n "$(ls old-results)" ]; then
             FILENAME=old-results/$(ls old-results | head -n 1)
             cp $FILENAME baseline.json
@@ -110,7 +110,7 @@ jobs:
       # Some of them may fail in that case, but it's not a problem
       - uses: actions/upload-artifact@v4
         with:
-          name: results-v2.json
+          name: results-v2
           path: curr-results.json
         if: ${{ !cancelled() }}
 
@@ -142,5 +142,5 @@ jobs:
       - name: Upload baseline
         uses: actions/upload-artifact@v4
         with:
-          name: baseline-v2.json
+          name: baseline-v2
           path: baseline.json
