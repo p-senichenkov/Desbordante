@@ -1,9 +1,9 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "click>=8.2.0",
-#     "matplotlib>=3.8.0",
-#     "pydantic>=2.10.0"
+#     "click>=8.2.0, <9",
+#     "matplotlib>=3.8.0, <4",
+#     "pydantic>=2.10.0, <3"
 # ]
 # ///
 ''' Benchmark results visualization tool
