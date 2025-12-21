@@ -123,11 +123,12 @@ jobs:
           python3 -m venv .venv
           .venv/bin/python3 -m pip install uv
           if [[ -a 'baseline.json' ]]; then
-            uv run src/tests/benchmark/display_benchmarks.py --old_results old-results \
-              --baseline baseline.json --curr_results curr-results.json --output plots.pdf
+            .venv/bin/python3 -m uv run src/tests/benchmark/display_benchmarks.py \
+              --old_results old-results --baseline baseline.json --curr_results curr-results.json \
+              --output plots.pdf
           else
-            uv run src/tests/benchmark/display_benchmarks.py --old_results old-results \
-              --curr_results curr-results.json --output plots.pdf
+            .venv/bin/python3 -m uv run src/tests/benchmark/display_benchmarks.py \
+              --old_results old-results --curr_results curr-results.json --output plots.pdf
           fi
 
         if: ${{ !cancelled() }}
