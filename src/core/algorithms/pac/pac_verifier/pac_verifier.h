@@ -5,12 +5,12 @@
 #include <utility>
 #include <vector>
 
-#include "algorithm.h"
-#include "algorithms/pac/pac.h"
-#include "names.h"
-#include "table/column_layout_typed_relation_data.h"
-#include "tabular_data/input_table/option.h"
-#include "tabular_data/input_table_type.h"
+#include "core/algorithms/algorithm.h"
+#include "core/algorithms/pac/pac.h"
+#include "core/config/names.h"
+#include "core/config/tabular_data/input_table/option.h"
+#include "core/config/tabular_data/input_table_type.h"
+#include "core/model/table/column_layout_typed_relation_data.h"
 
 namespace algos::pac_verifier {
 /// @brief Base class for Probabilistic Approximate Constrains verifiers

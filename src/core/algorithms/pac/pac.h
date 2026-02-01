@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "model/table/relational_schema.h"
+#include "core/model/table/relational_schema.h"
 
 namespace model {
 

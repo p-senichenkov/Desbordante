@@ -1,4 +1,4 @@
-#include "algorithms/pac/pac_verifier/pac_verifier.h"
+#include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -7,10 +7,10 @@
 #include <utility>
 #include <vector>
 
-#include "descriptions.h"
-#include "names.h"
-#include "option_using.h"
-#include "tabular_data/input_table/option.h"
+#include "core/config/descriptions.h"
+#include "core/config/names.h"
+#include "core/config/option_using.h"
+#include "core/config/tabular_data/input_table/option.h"
 
 namespace algos::pac_verifier {
 void PACVerifier::RegisterOptions() {
