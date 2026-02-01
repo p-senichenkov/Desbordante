@@ -1,12 +1,15 @@
 #include "python_bindings/py_util/get_py_type.h"
 
+#include <cstddef>
 #include <functional>
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
 
 #include <Python.h>
+#include <pybind11/functional.h>
 #include <pybind11/pytypes.h>
+#include <pybind11/stl.h>
 #include <pybind11/stl/filesystem.h>
 
 #include "core/algorithms/association_rules/ar_algorithm_enums.h"
@@ -19,6 +22,7 @@
 #include "core/algorithms/od/fastod/od_ordering.h"
 #include "core/algorithms/pac/model/default_domains/domain_type.h"
 #include "core/algorithms/pac/model/idomain.h"
+#include "core/algorithms/pac/pac_verifier/fd_pac_verifier/column_metric.h"
 #include "core/config/custom_random_seed/type.h"
 #include "core/config/error_measure/type.h"
 #include "core/config/tabular_data/input_table_type.h"
@@ -124,6 +128,11 @@ py::tuple GetPyType(std::type_index type_index) {
             PyTypePair<pac::model::DomainType, kPyStr>,
             {typeid(std::shared_ptr<pac::model::IDomain>),
              []() { return MakeTypeTuple(py::type::of<pac::model::IDomain>()); }},
+            {typeid(std::vector<algos::pac_verifier::ValueMetric>),
+             []() {
+                 return MakeTypeTuple(kPyList,
+                                      py::type::of<algos::pac_verifier::detail::FakeValueMetric>());
+             }},
     };
     return type_map.at(type_index)();
 }

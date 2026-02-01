@@ -1,7 +1,8 @@
 #include "python_bindings/pac/bind_pac.h"
 
+#include <cstddef>
 #include <functional>
-#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -12,11 +13,13 @@
 #include <pybind11/stl.h>
 
 #include "core/algorithms/pac/domain_pac.h"
+#include "core/algorithms/pac/fd_pac.h"
 #include "core/algorithms/pac/model/default_domains/ball.h"
 #include "core/algorithms/pac/model/default_domains/parallelepiped.h"
 #include "core/algorithms/pac/model/default_domains/untyped_domain.h"
 #include "core/algorithms/pac/model/idomain.h"
 #include "core/algorithms/pac/pac.h"
+#include "core/python_bindings/py_util/table_serialization.h"
 
 namespace py = pybind11;
 
@@ -37,6 +40,32 @@ py::tuple DomainPACToTuple(model::DomainPAC const& d_pac) {
     result[column_names.size() + 2] = d_pac.GetDelta();
     return result;
 }
+
+py::tuple FDPACToTuple(model::FDPAC const& fd_pac) {
+    auto const lhs_col_names = fd_pac.GetLhsColumnNames();
+    auto const rhs_col_names = fd_pac.GetRhsColumnNames();
+    auto const lhs_deltas = fd_pac.GetLhsDeltas();
+    auto const epsilons = fd_pac.GetEpsilons();
+    auto const delta = fd_pac.GetDelta();
+
+    auto add_to_tuple = [](py::tuple& tp, auto const& vec, std::size_t& shift) {
+        for (std::size_t i = 0; i < vec.size(); ++i) {
+            tp[shift + i] = vec[i];
+        }
+        shift += vec.size();
+    };
+
+    py::tuple result(lhs_col_names.size() + rhs_col_names.size() + lhs_deltas.size() +
+                     epsilons.size() + 1);
+    std::size_t shift = 0;
+    add_to_tuple(result, lhs_col_names, shift);
+    add_to_tuple(result, rhs_col_names, shift);
+    add_to_tuple(result, lhs_deltas, shift);
+    add_to_tuple(result, epsilons, shift);
+    result[shift] = delta;
+
+    return result;
+}
 }  // namespace
 
 namespace python_bindings {
@@ -44,6 +73,7 @@ void BindPAC(py::module& main_module) {
     using namespace model;
     using namespace pac::model;
     using namespace pybind11::literals;
+    using namespace table_serialization;
 
     auto pac_module = main_module.def_submodule("pac");
 
@@ -52,7 +82,7 @@ void BindPAC(py::module& main_module) {
             .def("to_short_string", &PAC::ToShortString)
             .def("to_long_string", &PAC::ToLongString)
             .def("__str__", &PAC::ToLongString);
-    // None of current PAC types can be pickled, because all of them contain user-defined metrics
+    // Domain PACs cannot be pickled, because they contain user-defined metrics
     py::class_<DomainPAC, PAC>(pac_module, "DomainPAC")
             .def_property_readonly("epsilon", &PAC::GetEpsilon)
             .def_property_readonly("delta", &PAC::GetDelta)
@@ -71,6 +101,49 @@ void BindPAC(py::module& main_module) {
                  })
             .def("__hash__",
                  [](DomainPAC const& d_pac) { return py::hash(DomainPACToTuple(d_pac)); });
+    py::class_<FDPAC, PAC>(pac_module, "FDPAC")
+            .def_property_readonly("epsilons", &PAC::GetEpsilons)
+            .def_property_readonly("delta", &PAC::GetDelta)
+            .def_property_readonly("lhs_deltas", &FDPAC::GetLhsDeltas)
+            .def_property_readonly(
+                    "lhs_indices",
+                    [](FDPAC const& fd_pac) { return fd_pac.GetLhs().GetColumnIndicesAsVector(); })
+            .def_property_readonly(
+                    "rhs_indices",
+                    [](FDPAC const& fd_pac) { return fd_pac.GetRhs().GetColumnIndicesAsVector(); })
+            .def_property_readonly("lhs_column_names", &FDPAC::GetLhsColumnNames)
+            .def_property_readonly("rhs_column_names", &FDPAC::GetRhsColumnNames)
+            .def("__eq__",
+                 [](FDPAC const& a, FDPAC const& b) {
+                     return a.GetLhs() == b.GetLhs() && a.GetRhs() == b.GetRhs() &&
+                            a.GetLhsDeltas() == b.GetLhsDeltas() &&
+                            a.GetEpsilons() == b.GetEpsilons() && a.GetDelta() == b.GetDelta();
+                 })
+            .def("__hash__", [](FDPAC const& fd_pac) { return py::hash(FDPACToTuple(fd_pac)); })
+            .def(py::pickle(
+                    // __getstate__
+                    [](FDPAC const& fd_pac) {
+                        auto schema_state = SerializeRelationalSchema(fd_pac.GetRelSchema().get());
+                        auto lhs_state = SerializeVertical(fd_pac.GetLhs());
+                        auto rhs_state = SerializeVertical(fd_pac.GetRhs());
+                        return py::make_tuple(std::move(schema_state), std::move(lhs_state),
+                                              std::move(rhs_state), fd_pac.GetLhsDeltas(),
+                                              fd_pac.GetEpsilons(), fd_pac.GetDelta());
+                    },
+                    // __setstate__
+                    [](py::tuple t) {
+                        if (t.size() != 6) {
+                            throw std::runtime_error("Invalid state for FD PAC pickle!");
+                        }
+                        auto schema = DeserializeRelationalSchema(t[0].cast<py::tuple>());
+                        auto lhs = DeserializeVertical(t[1].cast<py::tuple>(), schema.get());
+                        auto rhs = DeserializeVertical(t[2].cast<py::tuple>(), schema.get());
+                        auto lhs_deltas = t[3].cast<std::vector<double>>();
+                        auto epsilons = t[4].cast<std::vector<double>>();
+                        auto delta = t[5].cast<double>();
+                        return FDPAC(std::move(schema), std::move(lhs), std::move(rhs),
+                                     std::move(lhs_deltas), std::move(epsilons), delta);
+                    }));
 
     // Domains
     auto domains_module = pac_module.def_submodule("domains");
