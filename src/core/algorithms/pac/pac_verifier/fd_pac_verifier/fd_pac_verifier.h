@@ -13,13 +13,10 @@
 #include <variant>
 #include <vector>
 
-#include <spdlog/fmt/bundled/base.h>
-
 #include "core/algorithms/pac/fd_pac.h"
 #include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/pac_verifier/fd_pac_verifier/column_metric.h"
 #include "core/algorithms/pac/pac_verifier/fd_pac_verifier/fd_pac_highlight.h"
-#include "core/algorithms/pac/pac_verifier/fd_pac_verifier/tuple_metric.h"
 #include "core/algorithms/pac/pac_verifier/fd_pac_verifier/tuple_pair.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/util/make_tuples.h"
@@ -85,7 +82,8 @@ private:
     std::vector<ValueMetric> lhs_metrics_opt_;
     std::vector<ValueMetric> rhs_metrics_opt_;
 
-    std::shared_ptr<TupleMetric const> metrics_;
+    std::vector<ColumnMetric> lhs_metrics_;
+    std::vector<ColumnMetric> rhs_metrics_;
 
     std::vector<double> lhs_Deltas_;
 
@@ -121,6 +119,11 @@ public:
 
 template <bool MetricOpt>
 void FDPACVerifier<MetricOpt>::PreparePairs() {
+    auto col_dist = [](std::vector<ColumnMetric> const& metrics, pac::model::Tuple const& a,
+                       pac::model::Tuple const& b, std::size_t col_num) -> double {
+        return metrics[col_num].Dist(a[col_num], b[col_num]);
+    };
+
     // All pairs have first_idx < second_idx. See "key ideas".
     sorted_gamma_ = std::make_shared<Pairs>();
     auto const num_rows = TypedRelation().GetNumRows();
@@ -130,7 +133,7 @@ void FDPACVerifier<MetricOpt>::PreparePairs() {
             auto const& second_lhs = (*lhs_tuples_)[j];
             bool add_to_gamma = true;
             for (std::size_t col_num = 0; col_num < first_lhs.size(); ++col_num) {
-                auto lhs_dist = metrics_->LhsDistOnColumn(first_lhs, second_lhs, col_num);
+                auto lhs_dist = col_dist(lhs_metrics_, first_lhs, second_lhs, col_num);
                 if (lhs_dist > lhs_Deltas_[col_num]) {
                     add_to_gamma = false;
                     break;
@@ -139,7 +142,11 @@ void FDPACVerifier<MetricOpt>::PreparePairs() {
             if (add_to_gamma) {
                 auto const& first_rhs = (*rhs_tuples_)[i];
                 auto const& second_rhs = (*rhs_tuples_)[j];
-                double max_rhs_dist = metrics_->RhsDist(first_rhs, second_rhs);
+                double max_rhs_dist = 0;
+                for (std::size_t col_num = 0; col_num < first_rhs.size(); ++col_num) {
+                    max_rhs_dist = std::max(max_rhs_dist,
+                                            col_dist(rhs_metrics_, first_rhs, second_rhs, col_num));
+                }
                 sorted_gamma_->push_back(TuplePair{i, j, max_rhs_dist});
             }
         }
@@ -156,13 +163,18 @@ void FDPACVerifier<MetricOpt>::PreparePairs() {
 template <bool MetricOpt>
 std::vector<std::pair<double, double>> FDPACVerifier<MetricOpt>::CalculateEmpiricalProbabilities()
         const {
+    // NOTE: A 10^6-row table (which is an ordinary case) will contain 10^12 pairs.
+    // But if all these TuplePair objects will somehow fit in memory, std::size_t is guaranteed to
+    // be large enough to hold their number
+    std::size_t total_tuples = TypedRelation().GetNumRows();
+    std::size_t total_pairs = total_tuples * total_tuples;
+
     std::vector<std::pair<double, double>> result;
 
     if (sorted_gamma_->empty()) {
         return {{0, 0}, {0, 1}};
     }
 
-    std::size_t total_tuples = TypedRelation().GetNumRows();
     // delta = (2 * pairs + total_tuples) / (2 * |sorted_gamma_| + total_tuples)
     // => pairs = (delta * (2 * |sorted_gamma_| + total_tuples) - total_tuples) / 2 =
     //           = delta * |sorted_gamma_| + total_tuples * (delta - 1) / 2
@@ -171,7 +183,7 @@ std::vector<std::pair<double, double>> FDPACVerifier<MetricOpt>::CalculateEmpiri
         if (num_pairs < 0) {
             std::ostringstream msg;
             msg << "Num pairs is negative (formula: " << num_pairs << " = " << delta << " * "
-                << gamma_sz << " + (" << delta << " - 1) * )" << " * " << total_tuples << " / 2)";
+                << gamma_sz << " + " << delta - 1 << " * )" << " * " << total_tuples << " / 2)";
             throw std::runtime_error(msg.str());
         }
         return num_pairs;
@@ -186,17 +198,20 @@ std::vector<std::pair<double, double>> FDPACVerifier<MetricOpt>::CalculateEmpiri
 
     // Use ceil to ensure that min_pairs is always enough to satisfy min_delta
     std::size_t min_pairs_num = std::ceil(get_num_pairs(MinDelta()));
+    LOG_TRACE("Min pairs num: {} = {} * {} + {} * {}", min_pairs_num, MinDelta(),
+              sorted_gamma_->size(), MinDelta() - 1, total_tuples);
 
-    auto total_pairs = total_tuples * 2;
     std::size_t pairs_step;
     if (DeltaSteps() <= 1) {
         pairs_step = total_pairs - min_pairs_num;
     } else {
         pairs_step =
                 std::round(static_cast<double>(total_pairs - min_pairs_num) / (DeltaSteps() - 1));
+        LOG_TRACE("Pairs step: {} = ({} - {}) / ({} - 1)", pairs_step, total_pairs, min_pairs_num,
+                  DeltaSteps());
     }
     if (pairs_step == 0) {
-        LOG_INFO("Pairs step is 0. Setting to 1");
+        LOG_DEBUG("Pairs step is 0. Setting to 1");
         pairs_step = 1;
     }
 
@@ -204,6 +219,8 @@ std::vector<std::pair<double, double>> FDPACVerifier<MetricOpt>::CalculateEmpiri
                                         [](TuplePair const& p) { return p.rhs_dist; });
     std::size_t curr_size = std::distance(sorted_gamma_->begin(), end);
     result.emplace_back(0, get_delta(curr_size));
+    LOG_DEBUG("Delta steps: {}, pairs step: {}, initial size: {} (delta: {})", DeltaSteps(),
+              pairs_step, curr_size, get_delta(curr_size));
 
     if (sorted_gamma_->empty()) {
         result.emplace_back(0, 1);
@@ -211,7 +228,6 @@ std::vector<std::pair<double, double>> FDPACVerifier<MetricOpt>::CalculateEmpiri
     }
 
     auto iteration = [&](std::size_t needed_pairs_num) {
-        LOG_TRACE("Iteration for {}", needed_pairs_num);
         // Find eps_i
         auto need_to_add = needed_pairs_num - curr_size;
         auto actually_add = std::min(
@@ -286,9 +302,8 @@ void FDPACVerifier<MetricOpt>::ProcessPACTypeOptions() {
         return metrics;
     };
 
-    auto lhs_metrics = process_options(lhs_types_, lhs_metrics_opt_, lhs_indices_);
-    auto rhs_metrics = process_options(rhs_types_, rhs_metrics_opt_, rhs_indices_);
-    metrics_ = std::make_shared<TupleMetric>(std::move(lhs_metrics), std::move(rhs_metrics));
+    lhs_metrics_ = process_options(lhs_types_, lhs_metrics_opt_, lhs_indices_);
+    rhs_metrics_ = process_options(rhs_types_, rhs_metrics_opt_, rhs_indices_);
 }
 
 template <bool MetricOpt>
@@ -382,14 +397,14 @@ FDPACHighlight FDPACVerifier<MetricOpt>::GetHighlights(double eps_1, double eps_
     if (eps_2 <= eps_1) {
         return FDPACHighlight{};
     }
-    LOG_TRACE("Calculating higlights from {} to {}...", eps_1, eps_2);
+    LOG_DEBUG("Calculating higlights from {} to {}...", eps_1, eps_2);
 
     auto begin = std::ranges::upper_bound(*sorted_gamma_, eps_1, {},
                                           [](TuplePair const& pair) { return pair.rhs_dist; });
     auto end = std::ranges::upper_bound(begin, sorted_gamma_->end(), eps_2, {},
                                         [](TuplePair const& pair) { return pair.rhs_dist; });
 
-    LOG_TRACE("Highlighted pairs [{}, {})", std::distance(sorted_gamma_->begin(), begin),
+    LOG_DEBUG("Highlighted pairs [{}, {})", std::distance(sorted_gamma_->begin(), begin),
               std::distance(sorted_gamma_->begin(), end));
     return FDPACHighlight{lhs_tuples_,   rhs_tuples_, lhs_types_, rhs_types_,
                           sorted_gamma_, begin,       end};
