@@ -11,10 +11,8 @@
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
 #include "core/parser/csv_parser/csv_parser.h"
+#include "gtest/gtest.h"
 #include "tests/common/all_csv_configs.h"
-
-// TODO(p-senichenkov): Make tests pass
-// TODO(p-senichenkov): Moar tests
 
 namespace tests {
 using namespace config::names;
@@ -34,7 +32,8 @@ struct FDPACVerifyingParams {
                          double min_delta = -1, double min_epsilon = -1, double max_epsilon = -1,
                          unsigned long delta_steps = 0, bool dist_from_null_is_infinity = false,
                          std::vector<algos::pac_verifier::ValueMetric>&& lhs_metrics = {},
-                         std::vector<algos::pac_verifier::ValueMetric>&& rhs_metrics = {})
+                         std::vector<algos::pac_verifier::ValueMetric>&& rhs_metrics = {},
+                         double diagonal_threshold = 1e-5)
         : rhs_arity(rhs_indices.size()),
           params({{kCsvConfig, csv_config},
                   {kLhsIndices, std::move(lhs_indices)},
@@ -46,7 +45,8 @@ struct FDPACVerifyingParams {
                   {kDeltaSteps, delta_steps},
                   {kDistFromNullIsInfinity, dist_from_null_is_infinity},
                   {kLhsMetrics, std::move(lhs_metrics)},
-                  {kRhsMetrics, std::move(rhs_metrics)}}),
+                  {kRhsMetrics, std::move(rhs_metrics)},
+                  {kDiagonalThreshold, diagonal_threshold}}),
           exp_epsilon(expected_epsilon),
           exp_delta(expected_delta) {}
 };
@@ -73,16 +73,27 @@ auto const kAlphabetMetric = [](std::string const& a, std::string const& b) {
 
 INSTANTIATE_TEST_SUITE_P(
         FDPACVerifierTests, TestFDPACVerifier,
+        testing::Values(FDPACVerifyingParams(kMetricCoords, {2}, {3}, 0.026874, 0.962264, {0.2}),
+                        // String data test
+                        FDPACVerifyingParams(kTestND, {1}, {2}, 1, 0.889, {0.2}, 0.7),
+                        // Multi-column values
+                        FDPACVerifyingParams(kTestFDPAC, {0, 1}, {2, 3}, 0.061, 0.89, {1, 10},
+                                             0.7)));
+
+// TODO(p-senichenkov): Moar tests!
+
+INSTANTIATE_TEST_SUITE_P(
+        FDPACVerifierHeavyDatasets, TestFDPACVerifier,
         testing::Values(
-                // Simple test with pure metric FD
-                FDPACVerifyingParams(kMetricCoords, {2}, {3}, 0.06, 1, {0.2}),
-                // Simple test with pure PFD
-                FDPACVerifyingParams(kTestND, {1}, {2}, 0, 0.666, {0.2}, 0.5),
-                // Custom metrics test
-                FDPACVerifyingParams(kMushroom, {0}, {3}, 8.889, 0.676, {0}, 0.5, -1, -1, 0, false,
+                // Custom metrics
+                //  a. Default diagonal threshold
+                FDPACVerifyingParams(kMushroom, {0}, {3}, 12, 0.77, {0}, 0.5, -1, -1, 0, false,
                                      {kAlphabetMetric}, {kAlphabetMetric}),
-                // Multi-column values
-                FDPACVerifyingParams(kTestFDPAC, {0, 1}, {2, 3}, 0.061, 0.89, {1, 10}, 0.7)));
+                //  b. Bigger diagonal threshold
+                FDPACVerifyingParams(kMushroom, {0}, {3}, 11, 0.759, {0}, 0.5, -1, -1, 0, false,
+                                     {kAlphabetMetric}, {kAlphabetMetric}, 0.015),
+                // This test may consume a lot of memory
+                FDPACVerifyingParams(kIowa1kk, {1, 2}, {18, 19, 20}, 20, 0.7, {3}, 0.5, -1, -1)));
 
 using IndexPairs = std::vector<std::pair<std::size_t, std::size_t>>;
 using Clusters = std::vector<std::vector<std::size_t>>;
