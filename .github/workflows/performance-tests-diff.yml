@@ -1,0 +1,72 @@
+name: Performance regression tests diff
+on:
+  # TODO: tag
+  workflow_dispatch:
+    inputs:
+      baseline-branch:
+        type: string
+        default: main
+        description: "Branch name (tag, commit SHA) to compare with"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Cancel in-progress runs when a new workflow with the same group name is triggered
+  cancel-in-progress: true
+
+jobs:
+  performance-tests-on-baseline:
+    name: Run performance tests on ${{ inputs.baseline-branch }}
+    runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.save-results.results }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: inputs.baseline-branch
+      - name: Install dependencies
+        uses: ./.github/composite-actions/install-dependencies
+        with:
+          os: ubuntu-latest
+          toolset: gcc
+          boost-libraries: 'container,thread,graph,program_options'
+      - name: Build
+        run: |
+          export CXX=g++-10
+          ./build.sh --benchmark --no-tests
+      - name: Test
+        working-directory: ${{ github.workspace }}/build/target
+        run: |
+          ./Desbordante.benchmark --output ${{ github.workspace }}/curr-results.json
+      - name: Save results
+        run: |
+          {
+            echo 'results<<EOF'
+            cat results.json
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  performance-tests-on-head:
+    name: Run performance tests on ${{ github.ref }}
+    runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.read-results.outputs.results }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./.github/composite-actions/install-dependencies
+        with:
+          os: ubuntu-latest
+          toolset: gcc
+          boost-libraries: 'container,thread,graph,program_options'
+      - name: Build
+        run: |
+          export CXX=g++-10
+          ./build.sh --benchmark --no-tests
+      - name: Read baseline results
+        run: |
+          echo "${{ needs.performance-tests-on-baseline }}" > baseline.json
+      - name: Test
+        working-directory: ${{ github.workspace }}/build/target
+        run: |
+          ./Desbordante.benchmark --baseline ${{ github.workspace }}/baseline.json \
+            --output ${{ github.workspace }}/curr-results.json
