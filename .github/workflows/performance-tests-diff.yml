@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: inputs.baseline-branch
+          ref: ${{ inputs.baseline-branch }}
       - name: Install dependencies
         uses: ./.github/composite-actions/install-dependencies
         with:
