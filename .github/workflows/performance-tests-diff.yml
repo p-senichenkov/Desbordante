@@ -7,6 +7,7 @@ on:
         type: string
         default: main
         description: "Branch name (tag, commit SHA) to compare with"
+  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
