@@ -16,14 +16,14 @@ concurrency:
 
 jobs:
   performance-tests-on-baseline:
-    name: Run performance tests on ${{ inputs.baseline-branch }}
+    name: Run performance tests on ${{ inputs.baseline-branch || "main" }}
     runs-on: ubuntu-latest
     outputs:
       results: ${{ steps.save-results.results }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.baseline-branch }}
+          ref: ${{ inputs.baseline-branch || "main" }}
       - name: Install dependencies
         uses: ./.github/composite-actions/install-dependencies
         with:
