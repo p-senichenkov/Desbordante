@@ -18,7 +18,7 @@ namespace model {
  * TODO: consider using Vertical + vector<int> indices
  * instead of vector<IdentitfierSetValue>. Probably it will be faster
  * but also maybe will hurt readability.
- * UPD: Did not notice any difference in performance.
+ * UPD: Did not notice any difference in perfmormance.
  */
 class IdentifierSet {
 public:

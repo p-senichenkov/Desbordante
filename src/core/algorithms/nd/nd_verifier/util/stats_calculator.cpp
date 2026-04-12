@@ -16,7 +16,7 @@ namespace algos::nd_verifier::util {
         std::shared_ptr<std::vector<size_t>> frequencies) const {
     if (values->size() != frequencies->size()) {
         throw std::runtime_error(
-                "(StatsCalculator::GetFrequencies): frequencies contains an incorrect number of "
+                "(StatsCalulator::GetFrequencies): frequencies contains an incorrect number of "
                 "values");
     }
 

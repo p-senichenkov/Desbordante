@@ -25,14 +25,14 @@ unsigned LevenshteinDistance(std::string_view l, std::string_view r) {
             assert(j + 1 < v0.size());
             unsigned del_cost = v0[j + 1] + 1;
             unsigned insert_cost = v1[j] + 1;
-            unsigned substitution_cost;
+            unsigned substition_cost;
             if (l[i] == r[j]) {
-                substitution_cost = v0[j];
+                substition_cost = v0[j];
             } else {
-                substitution_cost = v0[j] + 1;
+                substition_cost = v0[j] + 1;
             }
 
-            v1[j + 1] = std::min({del_cost, insert_cost, substitution_cost});
+            v1[j + 1] = std::min({del_cost, insert_cost, substition_cost});
         }
 
         std::swap(v0, v1);

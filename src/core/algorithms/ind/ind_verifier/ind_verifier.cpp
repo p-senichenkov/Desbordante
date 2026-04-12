@@ -1,7 +1,7 @@
 /** \file
  * \brief INDVerifier algorithm
  *
- * Algorithm for verifying AIND implementation.
+ * Algorithm for veryfing AIND implementation.
  */
 #include "core/algorithms/ind/ind_verifier/ind_verifier.h"
 

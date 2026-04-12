@@ -228,16 +228,16 @@ vector<FastFDs::DiffSet> FastFDs::GetDiffSetsMod(Column const& col) const {
      */
     for (DiffSet const& diff_set : diff_sets_) {
         if (diff_set.Contains(col)) {
-            bool is_minimal = true;
+            bool is_miminal = true;
 
             for (DiffSet const& min_diff_set : diff_sets_mod) {
                 if (diff_set.Contains(min_diff_set)) {
-                    is_minimal = false;
+                    is_miminal = false;
                     break;
                 }
             }
 
-            if (is_minimal) {
+            if (is_miminal) {
                 diff_sets_mod.push_back(diff_set.Without(col));
             }
         }
