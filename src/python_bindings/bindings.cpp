@@ -14,6 +14,7 @@
 #include "python_bindings/dc/bind_fastadc.h"
 #include "python_bindings/dd/bind_dd_verification.h"
 #include "python_bindings/dd/bind_split.h"
+#include "python_bindings/dummy/bind_dummy.h"
 #include "python_bindings/dynamic/bind_dynamic_fd_verification.h"
 #include "python_bindings/fd/bind_fd.h"
 #include "python_bindings/fd/bind_fd_verification.h"
@@ -73,7 +74,8 @@ PYBIND11_MODULE(desbordante, module, pybind11::mod_gil_not_used()) {
                            BindCFDVerification,
                            BindDDVerification,
                            BindAODVerification,
-                           BindAfdMetricCalculation}) {
+                           BindAfdMetricCalculation,
+                           BindDummy}) {
         bind_func(module);
     }
 }

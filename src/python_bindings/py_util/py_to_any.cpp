@@ -1,12 +1,15 @@
 #include <pybind11/pybind11.h>
 
 #include <functional>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_map>
 
 #include <boost/any.hpp>
 #include <boost/core/demangle.hpp>
+#include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl/filesystem.h>
 
@@ -14,6 +17,7 @@
 #include "core/algorithms/association_rules/ar_algorithm_enums.h"
 #include "core/algorithms/cfd/enums.h"
 #include "core/algorithms/dd/dd.h"
+#include "core/algorithms/dummy/dummy_metric.h"
 #include "core/algorithms/fd/afd_metric/afd_metric.h"
 #include "core/algorithms/md/hymd/enums.h"
 #include "core/algorithms/md/hymd/hymd.h"
@@ -27,6 +31,8 @@
 #include "core/config/tabular_data/input_tables_type.h"
 #include "core/parser/csv_parser/csv_parser.h"
 #include "core/util/enum_to_available_values.h"
+#include "core/util/logger.h"
+#include "python_bindings/dummy/py_dummy_metric.h"
 #include "python_bindings/py_util/create_dataframe_reader.h"
 
 namespace {
@@ -119,6 +125,12 @@ boost::any InputTablesToAny(std::string_view option_name, py::handle obj) {
     return parsers;
 }
 
+boost::any DummyMetricToAny(std::string_view, py::handle obj) {
+    LOG_INFO("Converting dummy metric...");
+    return std::shared_ptr<DummyMetric>(
+            new python_bindigns::PyDummyMetric(py::reinterpret_borrow<py::object>(obj)));
+}
+
 std::unordered_map<std::type_index, ConvFunc> const kConverters{
         kNormalConvPair<bool>,
         kNormalConvPair<double>,
@@ -150,7 +162,8 @@ std::unordered_map<std::type_index, ConvFunc> const kConverters{
         kNormalConvPair<model::DDString>,
         kNormalConvPair<std::string>,
         kNormalConvPair<std::vector<std::pair<std::string, std::string>>>,
-        kNormalConvPair<std::pair<std::string, std::string>>};
+        kNormalConvPair<std::pair<std::string, std::string>>,
+        {typeid(std::shared_ptr<DummyMetric>), DummyMetricToAny}};
 
 }  // namespace
 

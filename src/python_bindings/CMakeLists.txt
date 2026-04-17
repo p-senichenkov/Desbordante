@@ -56,6 +56,19 @@ target_link_libraries(
 set_target_properties(${NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 
 desbordante_add_bind(
+    dummy
+    SRCS
+    dummy/bind_dummy.cpp
+    dummy/py_dummy_metric.h
+    LIBS
+    ${DESBORDANTE_PREFIX}::dummy
+    ${DESBORDANTE_PREFIX}::dummy::dummy_algorithm
+	better-enums
+	spdlog::spdlog_header_only
+	Boost::headers
+)
+
+desbordante_add_bind(
     ac
     SRCS
     ac/bind_ac.cpp
