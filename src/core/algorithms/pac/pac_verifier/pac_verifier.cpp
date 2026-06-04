@@ -16,6 +16,7 @@
 #include "core/config/names.h"
 #include "core/config/option_using.h"
 #include "core/model/table/column_layout_typed_relation_data.h"
+#include "core/util/benchmarked.h"
 #include "core/util/logger.h"
 
 namespace algos::pac_verifier {
@@ -145,14 +146,20 @@ std::optional<PACVerifier::EpsilonDelta> PACVerifier::CheckPairsBetweenMinMaxEps
 }
 
 void PACVerifier::LoadDataInternal() {
-    typed_relation_ = model::ColumnLayoutTypedRelationData::CreateFrom(*input_table_, true);
-    input_table_->Reset();
-    if (typed_relation_->GetColumnData().empty()) {
-        throw std::runtime_error("Got an empty dataset: PAC validation is meaningless.");
+    {
+        util::Benchmarked b{"Load table"};
+        typed_relation_ = model::ColumnLayoutTypedRelationData::CreateFrom(*input_table_, true);
+        input_table_->Reset();
+        if (typed_relation_->GetColumnData().empty()) {
+            throw std::runtime_error("Got an empty dataset: PAC validation is meaningless.");
+        }
     }
 
-    ProcessPACTypeOptions();
-    PreparePACTypeData();
+    {
+        util::Benchmarked b{"Prepare PAC type data"};
+        ProcessPACTypeOptions();
+        PreparePACTypeData();
+    }
 }
 
 void PACVerifier::MakeExecuteOptsAvailable() {
