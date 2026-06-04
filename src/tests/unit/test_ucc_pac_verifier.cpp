@@ -109,6 +109,10 @@ INSTANTIATE_TEST_SUITE_P(
                 // "Verification"
                 // FIXME: This test fails!
                 UCCPACVerifyingParams(kMetricMovies, {2}, 11, 0.402, 0.402, -1, -1),
+                // TODO: moar
+                // NULLs are processed correctly with default metric
+                // (distance from NULL to any value is 0)
+                UCCPACVerifyingParams(kNullEmpty, {1}, 0, 1),
         }));
 
 TEST(UCCPACVerifierTests, DefaultMetricFails) {
