@@ -85,6 +85,9 @@ private:
 public:
     double Dist(model::Type const* type, std::byte const* first,
                 std::byte const* second) const override {
+        if (!first || !second) {
+            return 0;
+        }
         return ConvertType(type)->Dist(first, second);
     }
 };

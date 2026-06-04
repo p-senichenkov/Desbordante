@@ -65,7 +65,9 @@ public:
 
         double result = 0;
         for (std::size_t i = 0; i < types.size(); ++i) {
-            result += std::pow(ConvertType(types[i])->Dist(first[i], second[i]), 2);
+            if (first[i] && second[i]) {
+                result += std::pow(ConvertType(types[i])->Dist(first[i], second[i]), 2);
+            }
         }
         return std::sqrt(result);
     }
