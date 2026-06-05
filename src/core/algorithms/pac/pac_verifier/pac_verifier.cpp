@@ -155,11 +155,8 @@ void PACVerifier::LoadDataInternal() {
         }
     }
 
-    {
-        util::Benchmarked b{"Prepare PAC type data"};
-        ProcessPACTypeOptions();
-        PreparePACTypeData();
-    }
+    ProcessPACTypeOptions();
+    PreparePACTypeData();
 }
 
 void PACVerifier::MakeExecuteOptsAvailable() {

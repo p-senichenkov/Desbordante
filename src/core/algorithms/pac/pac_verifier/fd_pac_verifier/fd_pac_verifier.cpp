@@ -22,6 +22,7 @@
 #include "core/config/names.h"
 #include "core/config/option_using.h"
 #include "core/config/tabular_data/input_table/option.h"
+#include "core/util/benchmarked.h"
 #include "core/util/logger.h"
 
 namespace algos::pac_verifier {
@@ -54,57 +55,68 @@ double FDPACVerifier::GetDelta(std::size_t num_pairs) const {
 }
 
 void FDPACVerifier::PreparePairs() {
-    auto col_dist = [](Metrics const& metrics, Types const& types, pac::model::Tuple const& a,
-                       pac::model::Tuple const& b, std::size_t col_num) -> double {
-        return metrics[col_num]->Dist(types[col_num], a[col_num], b[col_num]);
-    };
+    {
+        util::Benchmarked b{"Prepare pairs"};
+        auto col_dist = [](Metrics const& metrics, Types const& types, pac::model::Tuple const& a,
+                           pac::model::Tuple const& b, std::size_t col_num) -> double {
+            return metrics[col_num]->Dist(types[col_num], a[col_num], b[col_num]);
+        };
 
-    // All pairs have first_idx < second_idx. See "key ideas".
-    sorted_gamma_ = std::make_shared<Pairs>();
-    auto const num_rows = TypedRelation().GetNumRows();
-    for (std::size_t i = 0; i < num_rows; ++i) {
-        for (std::size_t j = i + 1; j < num_rows; ++j) {
-            auto const& first_lhs = (*lhs_tuples_)[i];
-            auto const& second_lhs = (*lhs_tuples_)[j];
-            bool add_to_gamma = true;
-            for (std::size_t col_num = 0; col_num < first_lhs.size(); ++col_num) {
-                auto lhs_dist = col_dist(lhs_metrics_, *lhs_types_, first_lhs, second_lhs, col_num);
-                if (lhs_dist > lhs_Deltas_[col_num]) {
-                    add_to_gamma = false;
-                    break;
+        // All pairs have first_idx < second_idx. See "key ideas".
+        sorted_gamma_ = std::make_shared<Pairs>();
+        auto const num_rows = TypedRelation().GetNumRows();
+        for (std::size_t i = 0; i < num_rows; ++i) {
+            for (std::size_t j = i + 1; j < num_rows; ++j) {
+                auto const& first_lhs = (*lhs_tuples_)[i];
+                auto const& second_lhs = (*lhs_tuples_)[j];
+                bool add_to_gamma = true;
+                for (std::size_t col_num = 0; col_num < first_lhs.size(); ++col_num) {
+                    auto lhs_dist =
+                            col_dist(lhs_metrics_, *lhs_types_, first_lhs, second_lhs, col_num);
+                    if (lhs_dist > lhs_Deltas_[col_num]) {
+                        add_to_gamma = false;
+                        break;
+                    }
                 }
-            }
-            if (add_to_gamma) {
-                auto const& first_rhs = (*rhs_tuples_)[i];
-                auto const& second_rhs = (*rhs_tuples_)[j];
-                double max_rhs_dist = 0;
-                for (std::size_t col_num = 0; col_num < first_rhs.size(); ++col_num) {
-                    max_rhs_dist = std::max(max_rhs_dist, col_dist(rhs_metrics_, *rhs_types_,
-                                                                   first_rhs, second_rhs, col_num));
+                if (add_to_gamma) {
+                    auto const& first_rhs = (*rhs_tuples_)[i];
+                    auto const& second_rhs = (*rhs_tuples_)[j];
+                    double max_rhs_dist = 0;
+                    for (std::size_t col_num = 0; col_num < first_rhs.size(); ++col_num) {
+                        max_rhs_dist =
+                                std::max(max_rhs_dist, col_dist(rhs_metrics_, *rhs_types_,
+                                                                first_rhs, second_rhs, col_num));
+                    }
+                    sorted_gamma_->push_back(TuplePair{i, j, max_rhs_dist});
                 }
-                sorted_gamma_->push_back(TuplePair{i, j, max_rhs_dist});
             }
         }
     }
+
+    util::Benchmarked b{"Sort pairs"};
     std::ranges::sort(*sorted_gamma_, {}, [](TuplePair const& p) { return p.dist; });
 }
 
 void FDPACVerifier::PreparePACTypeData() {
     using namespace pac::util;
 
-    lhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), lhs_indices_);
-    rhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), rhs_indices_);
+    {
+        util::Benchmarked b{"Prepare tuples and types"};
+        lhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), lhs_indices_);
+        rhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), rhs_indices_);
 
-    auto const& col_data = TypedRelation().GetColumnData();
-    auto make_types = [&col_data](config::IndicesType const& indices) -> std::shared_ptr<Types> {
-        auto types = std::make_shared<Types>(indices.size());
-        std::ranges::transform(indices, types->begin(), [&col_data](std::size_t const idx) {
-            return &col_data[idx].GetType();
-        });
-        return types;
-    };
-    lhs_types_ = make_types(lhs_indices_);
-    rhs_types_ = make_types(rhs_indices_);
+        auto const& col_data = TypedRelation().GetColumnData();
+        auto make_types =
+                [&col_data](config::IndicesType const& indices) -> std::shared_ptr<Types> {
+            auto types = std::make_shared<Types>(indices.size());
+            std::ranges::transform(indices, types->begin(), [&col_data](std::size_t const idx) {
+                return &col_data[idx].GetType();
+            });
+            return types;
+        };
+        lhs_types_ = make_types(lhs_indices_);
+        rhs_types_ = make_types(rhs_indices_);
+    }
 
     PreparePairs();
 }

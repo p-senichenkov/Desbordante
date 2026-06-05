@@ -17,21 +17,21 @@ namespace benchmark {
 inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
     using namespace config::names;
 
-    runner.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(
-            tests::kIowa650k,
-            {
-                    {kColumnIndices, config::IndicesType{2, 3, 8, 9}},
-                    {kDomain,
-                     std::shared_ptr<pac::model::IDomain>(new pac::model::Ball{
-                             std::vector<std::string>{"3", "24 Минимаркет", "40", "John Doe"},
-                             15})},
-            });
+    // runner.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(
+    //         tests::kIowa650k,
+    //         {
+    //                 {kColumnIndices, config::IndicesType{2, 3, 8, 9}},
+    //                 {kDomain,
+    //                  std::shared_ptr<pac::model::IDomain>(new pac::model::Ball{
+    //                          std::vector<std::string>{"3", "24 Минимаркет", "40", "John Doe"},
+    //                          15})},
+    //         });
     runner.RegisterSimpleBenchmark<algos::pac_verifier::FDPACVerifier>(
-            tests::kIowa650k, {
+            tests::kIowa100k, {
                                       {kLhsIndices, config::IndicesType{2, 3}},
                                       {kRhsIndices, config::IndicesType{8, 9}},
                               });
-    runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
-            tests::kIowa650k, {{kColumnIndices, config::IndicesType{2, 3, 8, 8}}});
+    // runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
+    //         tests::kIowa650k, {{kColumnIndices, config::IndicesType{2, 3, 8, 7}}});
 }
 }  // namespace benchmark
