@@ -10,7 +10,6 @@
 
 from pathlib import Path
 from dataclasses import dataclass, asdict
-import json
 import time
 import shutil
 
@@ -19,27 +18,7 @@ from scipy import stats
 import numpy
 
 import read_from_results
-
-
-@dataclass(frozen=True)
-class Results:
-    algo_name: str
-    raw_results: list[float]
-    normaltest_p_value: float
-    shapiro_p_value: float
-    mean: float
-    std: float
-    conf_int_half: float
-
-    @staticmethod
-    def pretty_dump(results) -> str:
-        lst = [asdict(res) for res in results]
-        return json.dumps(lst, indent=2, sort_keys=True)
-
-    @staticmethod
-    def load(s: str):
-        lst = json.loads(s)
-        return [Results(**dct) for dct in lst]
+from data import Results
 
 
 def process_results(results: dict[str, list[float]]) -> list[Results]:
@@ -47,8 +26,27 @@ def process_results(results: dict[str, list[float]]) -> list[Results]:
     for algo_name, raw_results in results.items():
         normaltest_p_value = float(stats.normaltest(raw_results).pvalue)
         shapiro_p_value = float(stats.shapiro(raw_results).pvalue)
+        dropped_by_iqr = False
         if normaltest_p_value < 0.05 and shapiro_p_value < 0.05:
             print(f"WARNING: None of normal tests passed for {algo_name}")
+            print("Trying to drop outlier")
+            # Use interquantile range to determine if outlier can be dropped
+            raw_results.sort()
+            q25 = numpy.percentile(raw_results, 25)
+            q75 = numpy.percentile(raw_results, 75)
+            iqr = q75 - q25
+            lower = q25 - 1.5 * iqr
+            upper = q75 - 1.5 * iqr
+            if raw_results[-1] > upper:
+                dropped_by_iqr = raw_results[-1]
+                del raw_results[-1]
+            elif raw_results[0] < lower:
+                dropped_by_iqr = raw_results[0]
+                del raw_results[0]
+            normaltest_p_value = float(stats.normaltest(raw_results).pvalue)
+            shapiro_p_value = float(stats.shapiro(raw_results).pvalue)
+            if normaltest_p_value < 0.05 and shapiro_p_value < 0.05:
+                print("!!! Still don't pass !!!")
         mean = float(numpy.mean(raw_results))
         std = float(numpy.std(raw_results, ddof=1))
         conf_int_half = stats.t.ppf(0.975, df=len(raw_results) - 1) * stats.sem(
@@ -63,6 +61,7 @@ def process_results(results: dict[str, list[float]]) -> list[Results]:
                 mean=mean,
                 std=std,
                 conf_int_half=conf_int_half,
+                dropped_by_iqr=dropped_by_iqr,
             )
         )
     return result

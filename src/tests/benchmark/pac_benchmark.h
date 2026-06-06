@@ -42,11 +42,19 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
                              15})},
             });
 #endif
-#if 1
+#if 0
     detail::FDPACBenchmark(runner, tests::kIowa10k);
+#endif
+#if 0
     detail::FDPACBenchmark(runner, tests::kIowa20k);
+#endif
+#if 0
     detail::FDPACBenchmark(runner, tests::kIowa50k);
-    // detail::FDPACBenchmark(runner, tests::kIowa100k);
+#endif
+#if 1
+    detail::FDPACBenchmark(runner, tests::kIowa100k);
+#endif
+#if 0
     detail::FDPACBenchmark(runner, tests::kIowa200k);
 #endif
     // runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
