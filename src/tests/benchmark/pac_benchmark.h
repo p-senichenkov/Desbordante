@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
+#include "core/algorithms/algo_factory.h"
 #include "core/algorithms/pac/model/default_domains/ball.h"
 #include "core/algorithms/pac/model/idomain.h"
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_verifier.h"
@@ -13,7 +15,6 @@
 #include "tests/benchmark/benchmark_comparer.h"
 #include "tests/benchmark/benchmark_runner.h"
 #include "tests/common/all_csv_configs.h"
-#include "tests/common/csv_config_util.h"
 
 namespace benchmark {
 namespace detail {
@@ -26,44 +27,53 @@ inline void FDPACBenchmark(BenchmarkRunner& runner, CSVConfig const& csv_config)
                                 {kRhsIndices, config::IndicesType{8, 9}},
                         });
 }
+
+template <typename Algo>
+inline void BenchmarkMediumIowas(BenchmarkRunner& runner, algos::StdParamsMap options) {
+    using namespace tests;
+
+    for (auto const& iowa : {
+                 kIowa5k,
+                 kIowa10k,
+                 kIowa20k,
+                 kIowa50k,
+                 kIowa100k,
+                 kIowa200k,
+         }) {
+        runner.RegisterSimpleBenchmark<Algo>(iowa, std::move(options));
+    }
+}
+
+inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
+    using namespace config::names;
+
+    algos::StdParamsMap domain_pac_options{
+            {kColumnIndices, config::IndicesType{2, 3, 8, 9}},
+            {kDomain,
+             std::shared_ptr<pac::model::IDomain>(new pac::model::Ball{
+                     std::vector<std::string>{"3", "24 Минимаркет", "40", "John Doe"}, 15})}};
+    algos::StdParamsMap fd_pac_options{{kLhsIndices, config::IndicesType{2, 3}},
+                                       {kRhsIndices, config::IndicesType{8, 9}}};
+    algos::StdParamsMap ucc_pac_options{{kColumnIndices, config::IndicesType{2, 3, 8, 7}}};
+
+#if 0
+    BenchmarkMediumIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
+#endif
+
+#if 0
+    BenchmarkMediumIowas<algos::pac_verifier::FDPACVerifier>(runner, fd_pac_options);
+#endif
+
+#if 1
+    BenchmarkMediumIowas<algos::pac_verifier::UCCPACVerifier>(runner, ucc_pac_options);
+#endif
+}
 }  // namespace detail
 
 inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
     using namespace config::names;
     using namespace tests;
 
-#if 0
-    runner.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(
-            tests::kIowa650k,
-            {
-                    {kColumnIndices, config::IndicesType{2, 3, 8, 9}},
-                    {kDomain,
-                     std::shared_ptr<pac::model::IDomain>(new pac::model::Ball{
-                             std::vector<std::string>{"3", "24 Минимаркет", "40", "John Doe"},
-                             15})},
-            });
-#endif
-
-#if 1
-    detail::FDPACBenchmark(runner, kIowa5k);
-#endif
-
-#if 0
-    detail::FDPACBenchmark(runner, tests::kIowa10k);
-#endif
-#if 0
-    detail::FDPACBenchmark(runner, tests::kIowa20k);
-#endif
-#if 0
-    detail::FDPACBenchmark(runner, tests::kIowa50k);
-#endif
-#if 0
-    detail::FDPACBenchmark(runner, tests::kIowa100k);
-#endif
-#if 0
-    detail::FDPACBenchmark(runner, tests::kIowa200k);
-#endif
-    // runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
-    //         tests::kIowa650k, {{kColumnIndices, config::IndicesType{2, 3, 8, 7}}});
+    detail::BenchmarkIowas4attr(runner);
 }
 }  // namespace benchmark
