@@ -30,6 +30,7 @@ inline void FDPACBenchmark(BenchmarkRunner& runner, CSVConfig const& csv_config)
 
 inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
     using namespace config::names;
+    using namespace tests;
 
 #if 0
     runner.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(
@@ -42,6 +43,11 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
                              15})},
             });
 #endif
+
+#if 1
+    detail::FDPACBenchmark(runner, kIowa5k);
+#endif
+
 #if 0
     detail::FDPACBenchmark(runner, tests::kIowa10k);
 #endif
@@ -51,7 +57,7 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
 #if 0
     detail::FDPACBenchmark(runner, tests::kIowa50k);
 #endif
-#if 1
+#if 0
     detail::FDPACBenchmark(runner, tests::kIowa100k);
 #endif
 #if 0

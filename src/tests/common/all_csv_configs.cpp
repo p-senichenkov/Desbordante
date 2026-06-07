@@ -40,6 +40,7 @@ CSVConfig const kIndTestTypos = CreateCsvConfig("ind_data/IndTestTypos.csv", ','
 CSVConfig const kIndTestWide2 = CreateCsvConfig("ind_data/TestWide2.csv", ',', false);
 CSVConfig const kIowa1kk = CreateCsvConfig("iowa1kk.csv", ',', true);
 CSVConfig const kIowa25attr1kk = CreateCsvConfig("iowa25attr1kk.csv", ',', true);
+CSVConfig const kIowa5k = CreateCsvConfig("iowa5k.csv", ',', true);
 CSVConfig const kIowa10k = CreateCsvConfig("iowa10k.csv", ',', true);
 CSVConfig const kIowa20k = CreateCsvConfig("iowa20k.csv", ',', true);
 CSVConfig const kIowa50k = CreateCsvConfig("iowa50k.csv", ',', true);

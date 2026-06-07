@@ -30,6 +30,7 @@ extern CSVConfig const kIndTestWide2;
 extern CSVConfig const kIowa1kk;
 extern CSVConfig const kIowa1kkNoDate;
 extern CSVConfig const kIowa25attr1kk;
+extern CSVConfig const kIowa5k;
 extern CSVConfig const kIowa10k;
 extern CSVConfig const kIowa20k;
 extern CSVConfig const kIowa50k;
