@@ -36,9 +36,11 @@ inline void BenchmarkMediumIowas(BenchmarkRunner& runner, algos::StdParamsMap op
                  kIowa5k,
                  kIowa10k,
                  kIowa20k,
+#if 0
                  kIowa50k,
                  kIowa100k,
                  kIowa200k,
+#endif
          }) {
         runner.RegisterSimpleBenchmark<Algo>(iowa, std::move(options));
     }
