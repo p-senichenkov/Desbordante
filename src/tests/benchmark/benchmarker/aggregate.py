@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from pathlib import Path
 import re
 from dataclasses import dataclass
@@ -8,24 +8,33 @@ import click
 
 from data import Results
 
-AggregatedData = namedtuple("AggregatedData", ["x", "y", "yerror"])
+AggregatedData = namedtuple("AggregatedData", ["x", "y", "yerror", "algo_name"])
 
 
-FD_PAC_IOWA_RE = re.compile(".+PACVerifier, iowa([0-9]+)k")
+FD_PAC_IOWA_RE = re.compile("FDPACVerifier, iowa([0-9]+)k")
+UCC_PAC_IOWA_RE = re.compile("UCCPACVerifier, iowa([0-9]+)k")
+
+name2re = {
+    "FD PAC Verifier": FD_PAC_IOWA_RE,
+    "UCC PAC Verifier": UCC_PAC_IOWA_RE,
+}
 
 
 def read_file(fname: Path) -> list[AggregatedData]:
-    result = []
+    result: list[AggregatedData] = []
     with open(fname, "r") as f:
         results = Results.load(f.read())
     for res in results:
-        m = FD_PAC_IOWA_RE.match(res.algo_name)
-        if not m:
-            raise ValueError("Bad algo name")
-        num_rows = int(m.group(1)) * 1000
-        mean = res.mean
-        error = res.conf_int_half
-        result.append(AggregatedData(num_rows, mean, error))
+        for name, regexp in name2re.items():
+            m = regexp.match(res.algo_name)
+            if m:
+                num_rows = int(m.group(1)) * 1000
+                mean = res.mean
+                error = res.conf_int_half
+                result.append(AggregatedData(num_rows, mean, error, name))
+                break
+        else:
+            raise ValueError(f"Algo name {res.algo_name} doesn't match any of regexps")
     return result
 
 
@@ -36,27 +45,41 @@ class AggregatedDataList:
     yerrs: list[float]
 
 
-def read_files(fnames: list[Path]) -> AggregatedDataList:
-    aggregated_results: list[AggregatedData] = []
+def read_files(fnames: list[Path]) -> dict[str, AggregatedDataList]:
+    results_by_name: dict[str, list[AggregatedData]] = defaultdict(list)
     for fname in fnames:
         aggregated = read_file(fname)
-        aggregated_results.extend(aggregated)
-    aggregated_results.sort(key=lambda aggr: aggr.x)
+        for aggr in aggregated:
+            results_by_name[aggr.algo_name].append(aggr)
+    for results in results_by_name.values():
+        results.sort(key=lambda aggr: aggr.x)
 
-    xs, ys, yerrs = [], [], []
-    for aggr_data in aggregated_results:
-        if aggr_data.x in xs:
-            print(f"WARNING: {aggr_data.x} duplicate")
-        xs.append(aggr_data.x)
-        ys.append(aggr_data.y)
-        yerrs.append(aggr_data.yerror)
-    return AggregatedDataList(xs, ys, yerrs)
+    result: dict[str, AggregatedDataList] = {}
+    for name, aggregated_results in results_by_name.items():
+        xs, ys, yerrs = [], [], []
+        for aggr_data in aggregated_results:
+            if aggr_data.x in xs:
+                print(f"WARNING: {aggr_data.x} duplicate")
+            xs.append(aggr_data.x)
+            ys.append(aggr_data.y)
+            yerrs.append(aggr_data.yerror)
+        result[name] = AggregatedDataList(xs, ys, yerrs)
+    return result
 
 
-def build_plot(aggregated: AggregatedDataList) -> None:
+def build_plot(aggregated_by_name: dict[str, AggregatedDataList]) -> None:
     plt.xscale("log")
     plt.yscale("log")
-    plt.errorbar(aggregated.xs, aggregated.ys, aggregated.yerrs)
+    plt.xlabel("Количество строк в таблице, тыс.")
+    plt.ylabel("Время работы, сек.")
+    for name, aggregated in aggregated_by_name.items():
+        plt.errorbar(
+            [v / 1000 for v in aggregated.xs],
+            [v / 1000 for v in aggregated.ys],
+            [v / 1000 for v in aggregated.yerrs],
+            label=name,
+        )
+    plt.legend()
     plt.show()
 
 
