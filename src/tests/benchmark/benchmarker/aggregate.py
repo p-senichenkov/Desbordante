@@ -11,10 +11,12 @@ from data import Results
 AggregatedData = namedtuple("AggregatedData", ["x", "y", "yerror", "algo_name"])
 
 
+DOMAIN_PAC_IOWA_RE = re.compile("DomainPACVerifier, iowa([0-9]+)k")
 FD_PAC_IOWA_RE = re.compile("FDPACVerifier, iowa([0-9]+)k")
 UCC_PAC_IOWA_RE = re.compile("UCCPACVerifier, iowa([0-9]+)k")
 
 name2re = {
+    "Domain PAC Verifier": DOMAIN_PAC_IOWA_RE,
     "FD PAC Verifier": FD_PAC_IOWA_RE,
     "UCC PAC Verifier": UCC_PAC_IOWA_RE,
 }
@@ -68,8 +70,8 @@ def read_files(fnames: list[Path]) -> dict[str, AggregatedDataList]:
 
 
 def build_plot(aggregated_by_name: dict[str, AggregatedDataList]) -> None:
-    plt.xscale("log")
-    plt.yscale("log")
+    # plt.xscale("log")
+    # plt.yscale("log")
     plt.xlabel("Количество строк в таблице, тыс.")
     plt.ylabel("Время работы, сек.")
     for name, aggregated in aggregated_by_name.items():
