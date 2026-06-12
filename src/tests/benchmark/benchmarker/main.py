@@ -9,7 +9,6 @@
 # ///
 
 from pathlib import Path
-from dataclasses import dataclass, asdict
 import time
 import shutil
 
@@ -18,6 +17,7 @@ from scipy import stats
 import numpy
 
 import read_from_results
+import read_from_logs
 from data import Results
 
 
@@ -76,13 +76,27 @@ def cli():
 @click.option("-e", "--executable", default="./Desbordante.benchmark")
 @click.option("-n", "--num-runs", default=20)
 @click.option("-d", "--res-dir", default=time.ctime())
-def results(executable: str, num_runs: int, res_dir: str):
+def results(executable: str, num_runs: int, res_dir: str, mode: str):
     results_dir = Path("results") / res_dir
-    if results_dir.exists():
-        shutil.rmtree(results_dir)
+    shutil.rmtree(results_dir, ignore_errors=True)
     results_dir.mkdir(parents=True)
 
     results = read_from_results.run_all(executable, num_runs, results_dir)
+    cooked_results = process_results(results)
+    with open(results_dir / "all_results.json", "w") as f:
+        f.write(Results.pretty_dump(cooked_results))
+
+
+@cli.command()
+@click.option("-e", "--executable", default="./Desbordante.benchmark")
+@click.option("-n", "--num-runs", default=20)
+@click.option("-d", "--res-dir", default=time.ctime())
+def logs(executable: str, num_runs: int, res_dir):
+    results_dir = Path("results") / res_dir
+    shutil.rmtree(results_dir, ignore_errors=True)
+    results_dir.mkdir(parents=True)
+
+    results = read_from_logs.run_all(executable, num_runs)
     cooked_results = process_results(results)
     with open(results_dir / "all_results.json", "w") as f:
         f.write(Results.pretty_dump(cooked_results))

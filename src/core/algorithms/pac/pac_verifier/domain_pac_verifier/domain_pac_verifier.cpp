@@ -13,6 +13,7 @@
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_highlight.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/util/make_tuples.h"
+#include "core/util/benchmarked.h"
 #include "core/util/bitset_utils.h"
 #include "core/util/logger.h"
 
@@ -30,14 +31,22 @@ void DomainPACVerifier::ProcessPACTypeOptions() {
 }
 
 void DomainPACVerifier::PreparePACTypeData() {
-    original_value_tuples_ =
-            pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
-
-    dists_from_domain_ = {};
-    dists_from_domain_.reserve(original_value_tuples_->size());
-    for (auto it = original_value_tuples_->begin(); it != original_value_tuples_->end(); ++it) {
-        dists_from_domain_.emplace_back(it, domain_->DistFromDomain(*it));
+    {
+        util::Benchmarked b{"Prepare tuples"};
+        original_value_tuples_ =
+                pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
     }
+
+    {
+        util::Benchmarked b{"Calculate distances from domain"};
+        dists_from_domain_ = {};
+        dists_from_domain_.reserve(original_value_tuples_->size());
+        for (auto it = original_value_tuples_->begin(); it != original_value_tuples_->end(); ++it) {
+            dists_from_domain_.emplace_back(it, domain_->DistFromDomain(*it));
+        }
+    }
+
+    util::Benchmarked b{"Sort distances from domain"};
     std::ranges::sort(dists_from_domain_, {}, [](auto const& p) { return p.second; });
 }
 

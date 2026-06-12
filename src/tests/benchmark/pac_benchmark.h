@@ -37,10 +37,14 @@ inline void BenchmarkMediumIowas(BenchmarkRunner& runner, algos::StdParamsMap op
                  kIowa5k,
                  kIowa10k,
                  kIowa20k,
+#endif
+#if 1
                  kIowa50k,
 #endif
+#if 0
                  kIowa100k,
                  kIowa200k,
+#endif
          }) {
         runner.RegisterSimpleBenchmark<Algo>(iowa, std::move(options));
     }
@@ -50,7 +54,7 @@ template <typename Algo>
 inline void BenchmarkLargeIowas(BenchmarkRunner& runner, algos::StdParamsMap options) {
     using namespace tests;
 
-#if 1
+#if 0
     for (auto const& iowa : {
 		    kIowa450k,
 		    kIowa550k,
