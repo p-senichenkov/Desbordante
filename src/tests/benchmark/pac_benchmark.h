@@ -33,17 +33,32 @@ inline void BenchmarkMediumIowas(BenchmarkRunner& runner, algos::StdParamsMap op
     using namespace tests;
 
     for (auto const& iowa : {
+#if 0
                  kIowa5k,
                  kIowa10k,
                  kIowa20k,
-#if 0
                  kIowa50k,
+#endif
                  kIowa100k,
                  kIowa200k,
-#endif
          }) {
         runner.RegisterSimpleBenchmark<Algo>(iowa, std::move(options));
     }
+}
+
+template <typename Algo>
+inline void BenchmarkLargeIowas(BenchmarkRunner& runner, algos::StdParamsMap options) {
+    using namespace tests;
+
+#if 1
+    for (auto const& iowa : {
+		    kIowa450k,
+		    kIowa550k,
+		    kIowa650k,
+         }) {
+        runner.RegisterSimpleBenchmark<Algo>(iowa, std::move(options));
+    }
+#endif
 }
 
 inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
@@ -58,15 +73,16 @@ inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
                                        {kRhsIndices, config::IndicesType{8, 9}}};
     algos::StdParamsMap ucc_pac_options{{kColumnIndices, config::IndicesType{2, 3, 8, 7}}};
 
-#if 0
+#if 1
     BenchmarkMediumIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
+    BenchmarkLargeIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
 #endif
 
 #if 0
     BenchmarkMediumIowas<algos::pac_verifier::FDPACVerifier>(runner, fd_pac_options);
 #endif
 
-#if 1
+#if 0
     BenchmarkMediumIowas<algos::pac_verifier::UCCPACVerifier>(runner, ucc_pac_options);
 #endif
 }
