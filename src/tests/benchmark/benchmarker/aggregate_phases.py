@@ -1,14 +1,24 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "click>=8.2.0, <9",
+#     "matplotlib>=3.11.0, <4"
+# ]
+# ///
+
 from pathlib import Path
 import re
+from dataclasses import dataclass
 
 from matplotlib import pyplot as plt
 import click
 
 from data import Results
 
-STAGE_RE = re.compile("(P?<stage_num>[0-9]+)[.] (P?<stage_name>)")
+STAGE_RE = re.compile("(?P<stage_num>[0-9]+)[.] (?P<stage_name>.+)")
 
 
+@dataclass
 class StageResult:
     stage_name: str
     mean: float
@@ -20,7 +30,7 @@ def read_file(fname: Path) -> list[StageResult]:
     with open(fname, "r") as f:
         results = Results.load(f.read())
     for res in results:
-        m = STAGE_RE.match(res.algo_name)
+        m = STAGE_RE.fullmatch(res.algo_name)
         assert m is not None
         stage_num = int(m.group("stage_num"))
         stage_name = m.group("stage_name")
@@ -46,6 +56,7 @@ def read_files(fnames: dict[str, Path]) -> dict[str, list[StageResult]]:
 
 def build_plots(results: dict[str, list[StageResult]]) -> None:
     # Pyplot expects another format: {"algo": [time]}
+    # TODO: Looks like it expects {"stage": [times]}. Need to experiment a bit
     stage_names = [stage_res.stage_name for stage_res in list(results.values())[0]]
     algo_results = {
         algo_name: [stage_res.mean for stage_res in stage_results]
@@ -54,6 +65,7 @@ def build_plots(results: dict[str, list[StageResult]]) -> None:
 
     plt.yscale("log")
     plt.grouped_bar(algo_results, tick_labels=stage_names)
+    plt.legend()
     plt.show()
 
 
