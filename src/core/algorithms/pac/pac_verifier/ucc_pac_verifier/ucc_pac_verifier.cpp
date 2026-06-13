@@ -22,6 +22,7 @@
 #include "core/config/names.h"
 #include "core/config/option_using.h"
 #include "core/config/tabular_data/input_table/option.h"
+#include "core/util/benchmarked.h"
 #include "core/util/logger.h"
 
 namespace algos::pac_verifier {
@@ -49,17 +50,21 @@ double UCCPACVerifier::GetDelta(std::size_t num_pairs) const {
 }
 
 void UCCPACVerifier::PreparePairs() {
-    sorted_pairs_ = std::make_shared<Pairs>();
-    auto const total_tuples = tuples_->size();
-    sorted_pairs_->reserve((total_tuples * (total_tuples - 1)) / 2);
-    for (std::size_t i = 0; i < total_tuples; ++i) {
-        for (std::size_t j = i + 1; j < total_tuples; ++j) {
-            auto const& first = (*tuples_)[i];
-            auto const& second = (*tuples_)[j];
-            sorted_pairs_->emplace_back(i, j,
-                                        metric_->Dist(tuple_type_->GetTypes(), first, second));
+    {
+        util::Benchmarked b{"Calculate distances"};
+        sorted_pairs_ = std::make_shared<Pairs>();
+        auto const total_tuples = tuples_->size();
+        sorted_pairs_->reserve((total_tuples * (total_tuples - 1)) / 2);
+        for (std::size_t i = 0; i < total_tuples; ++i) {
+            for (std::size_t j = i + 1; j < total_tuples; ++j) {
+                auto const& first = (*tuples_)[i];
+                auto const& second = (*tuples_)[j];
+                sorted_pairs_->emplace_back(i, j,
+                                            metric_->Dist(tuple_type_->GetTypes(), first, second));
+            }
         }
     }
+    util::Benchmarked b{"Sort distances"};
     std::ranges::sort(*sorted_pairs_, {}, [](TuplePair const& p) { return p.dist; });
 }
 
@@ -73,10 +78,12 @@ void UCCPACVerifier::ProcessPACTypeOptions() {
 }
 
 void UCCPACVerifier::PreparePACTypeData() {
+    util::Benchmarked b{"Prepare types and tuples"};
     tuples_ = pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
 }
 
 void UCCPACVerifier::PACTypeExecuteInternal() {
+    util::Benchmarked b{"PAC-Man"};
     std::ostringstream oss;
     oss << '{';
     for (auto it = column_indices_.begin(); it != column_indices_.end(); ++it) {
@@ -141,6 +148,7 @@ UCCPACVerifier::UCCPACVerifier() {
 }
 
 UCCPACHighlight UCCPACVerifier::GetHighlights(double eps_1, double eps_2) const {
+    util::Benchmarked b{"Calculate highlights"};
     if (!pac_) {
         throw std::runtime_error("Execute must be called before calling GetHighlights");
     }

@@ -56,7 +56,7 @@ double FDPACVerifier::GetDelta(std::size_t num_pairs) const {
 
 void FDPACVerifier::PreparePairs() {
     {
-        util::Benchmarked b{"Calculate pairwise distances"};
+        util::Benchmarked b{"Calculate distances"};
         auto col_dist = [](Metrics const& metrics, Types const& types, pac::model::Tuple const& a,
                            pac::model::Tuple const& b, std::size_t col_num) -> double {
             return metrics[col_num]->Dist(types[col_num], a[col_num], b[col_num]);
@@ -93,7 +93,7 @@ void FDPACVerifier::PreparePairs() {
         }
     }
 
-    util::Benchmarked b{"Sort pairs"};
+    util::Benchmarked b{"Sort distances"};
     std::ranges::sort(*sorted_gamma_, {}, [](TuplePair const& p) { return p.dist; });
 }
 
@@ -101,7 +101,7 @@ void FDPACVerifier::PreparePACTypeData() {
     using namespace pac::util;
 
     {
-        util::Benchmarked b{"Prepare tuples and types"};
+        util::Benchmarked b{"Prepare types and tuples"};
         lhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), lhs_indices_);
         rhs_tuples_ = MakeTuples(TypedRelation().GetColumnData(), rhs_indices_);
 
@@ -122,6 +122,7 @@ void FDPACVerifier::PreparePACTypeData() {
 }
 
 void FDPACVerifier::PACTypeExecuteInternal() {
+    util::Benchmarked b{"PAC-Man"};
     auto vec_to_str = [](auto const& vec) -> std::string {
         std::ostringstream oss;
         oss << '{';
@@ -206,6 +207,7 @@ FDPACVerifier::FDPACVerifier() {
 }
 
 FDPACHighlight FDPACVerifier::GetHighlights(double eps_1, double eps_2) const {
+    util::Benchmarked b{"Calculate highlights"};
     if (eps_2 < 0) {
         auto const& epsilons = GetPAC().GetEpsilons();
         if (epsilons.empty()) {

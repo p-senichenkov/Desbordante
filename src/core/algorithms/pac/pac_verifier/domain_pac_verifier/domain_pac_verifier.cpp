@@ -32,13 +32,13 @@ void DomainPACVerifier::ProcessPACTypeOptions() {
 
 void DomainPACVerifier::PreparePACTypeData() {
     {
-        util::Benchmarked b{"Prepare tuples"};
+        util::Benchmarked b{"Prepare types and tuples"};
         original_value_tuples_ =
                 pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
     }
 
     {
-        util::Benchmarked b{"Calculate distances from domain"};
+        util::Benchmarked b{"Calculate distances"};
         dists_from_domain_ = {};
         dists_from_domain_.reserve(original_value_tuples_->size());
         for (auto it = original_value_tuples_->begin(); it != original_value_tuples_->end(); ++it) {
@@ -46,7 +46,7 @@ void DomainPACVerifier::PreparePACTypeData() {
         }
     }
 
-    util::Benchmarked b{"Sort distances from domain"};
+    util::Benchmarked b{"Sort distances"};
     std::ranges::sort(dists_from_domain_, {}, [](auto const& p) { return p.second; });
 }
 
@@ -108,6 +108,7 @@ std::vector<PACVerifier::EpsilonDelta> DomainPACVerifier::FindEpsilons() const {
 }
 
 void DomainPACVerifier::PACTypeExecuteInternal() {
+    util::Benchmarked b{"PAC-Man"};
     std::ostringstream oss;
     oss << '{';
     for (auto it = column_indices_.begin(); it != column_indices_.end(); ++it) {
@@ -157,6 +158,7 @@ PACVerifier::EpsilonDelta DomainPACVerifier::GetEpsilonDeltaForEpsilon(double ep
 }
 
 DomainPACHighlight DomainPACVerifier::GetHighlights(double eps_1, double eps_2) const {
+    util::Benchmarked b{"Calculate highlights"};
     if (!pac_) {
         throw std::runtime_error("Execute must be called before GetHighlights");
     }
