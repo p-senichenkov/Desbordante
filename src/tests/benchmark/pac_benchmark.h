@@ -77,7 +77,7 @@ inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
                                        {kRhsIndices, config::IndicesType{8, 9}}};
     algos::StdParamsMap ucc_pac_options{{kColumnIndices, config::IndicesType{2, 3, 8, 7}}};
 
-#if 1
+#if 0
     BenchmarkMediumIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
     BenchmarkLargeIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
 #endif
@@ -86,7 +86,7 @@ inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
     BenchmarkMediumIowas<algos::pac_verifier::FDPACVerifier>(runner, fd_pac_options);
 #endif
 
-#if 0
+#if 1
     BenchmarkMediumIowas<algos::pac_verifier::UCCPACVerifier>(runner, ucc_pac_options);
 #endif
 }
