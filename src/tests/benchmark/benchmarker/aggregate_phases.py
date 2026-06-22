@@ -15,7 +15,7 @@ import click
 
 from data import Results
 
-STAGE_RE = re.compile("(?P<stage_num>[0-9]+)[.] (?P<stage_name>.+)")
+STAGE_RE = re.compile("(?P<stage_name>.+)")
 
 
 @dataclass
@@ -26,16 +26,9 @@ class StageResult:
 
 
 def read_file(fname: Path) -> list[StageResult]:
-    result: dict[int, StageResult] = {}
     with open(fname, "r") as f:
         results = Results.load(f.read())
-    for res in results:
-        m = STAGE_RE.fullmatch(res.algo_name)
-        assert m is not None
-        stage_num = int(m.group("stage_num"))
-        stage_name = m.group("stage_name")
-        result[stage_num] = StageResult(stage_name, res.mean, res.conf_int_half)
-    return [result[key] for key in sorted(result.keys())]
+    return [StageResult(res.algo_name, res.mean, res.conf_int_half) for res in results]
 
 
 def read_files(fnames: dict[str, Path]) -> dict[str, list[StageResult]]:
@@ -54,17 +47,36 @@ def read_files(fnames: dict[str, Path]) -> dict[str, list[StageResult]]:
     return result
 
 
+PHASE2LABEL = [
+    ("Load table", "Чтение таблицы"),
+    ("Prepare types and tuples", "Объединение значений в кортежи"),
+    ("Calculate distances", "Вычисление расстояний"),
+    ("Sort distances", "Сортировка расстояний"),
+    ("PAC-Man", "PAC-Man"),
+    ("Calculate highlights", "Вычисление исключений"),
+]
+
+
 def build_plots(results: dict[str, list[StageResult]]) -> None:
     # Pyplot expects another format: {"algo": [time]}
     # TODO: Looks like it expects {"stage": [times]}. Need to experiment a bit
-    stage_names = [stage_res.stage_name for stage_res in list(results.values())[0]]
-    algo_results = {
-        algo_name: [stage_res.mean for stage_res in stage_results]
-        for algo_name, stage_results in results.items()
-    }
+    stage_names = [phase2label[1] for phase2label in PHASE2LABEL]
+
+    # TODO: Display confidence interval?
+    means: dict[str, list[float]] = {}
+    for algo_name, algo_results in results.items():
+        algo_means = []
+        for phase2label in PHASE2LABEL:
+            for res in algo_results:
+                if res.stage_name == phase2label[0]:
+                    algo_means.append(res.mean)
+                    break
+            else:
+                assert False, f"No {phase2label[0]} for {algo_name}"
+            means[algo_name] = algo_means
 
     plt.yscale("log")
-    plt.grouped_bar(algo_results, tick_labels=stage_names)
+    plt.grouped_bar(means, tick_labels=stage_names)
     plt.legend()
     plt.show()
 
@@ -82,5 +94,5 @@ def main(filenames: list[str], algo_names: list[str]):
     build_plots(results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

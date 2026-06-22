@@ -10,7 +10,6 @@ LOG_PATTERN = re.compile("(?P<name>.+) took (?P<time>[0-9]+)ms")
 
 def extract_times(stdout: list[str]) -> dict[str, float]:
     result = {}
-    stage_num = 0
     for line in stdout:
         m = LOG_PATTERN.fullmatch(line)
         if m:
@@ -18,8 +17,7 @@ def extract_times(stdout: list[str]) -> dict[str, float]:
             time = float(m.group("time"))
             if name in result:
                 logging.warning(f"Duplicate phase: {name}")
-            result[f"{stage_num}. {name}"] = time
-            stage_num += 1
+            result[name] = time
     return result
 
 
