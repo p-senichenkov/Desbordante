@@ -83,7 +83,6 @@ void UCCPACVerifier::PreparePACTypeData() {
 }
 
 void UCCPACVerifier::PACTypeExecuteInternal() {
-    util::Benchmarked b{"PAC-Man"};
     std::ostringstream oss;
     oss << '{';
     for (auto it = column_indices_.begin(); it != column_indices_.end(); ++it) {
@@ -97,6 +96,7 @@ void UCCPACVerifier::PACTypeExecuteInternal() {
 
     PreparePairs();
 
+    util::Benchmarked b{"PAC-Man"};
     auto emp_probabilities = CalculateEmpiricalProbabilities(*sorted_pairs_);
     auto [epsilon, delta] = FindEpsilonDelta(std::move(emp_probabilities));
     // UCC PACs have quite different meaning of epsilon-delta, and thus delta selected by PAC-Man

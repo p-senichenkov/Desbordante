@@ -122,7 +122,6 @@ void FDPACVerifier::PreparePACTypeData() {
 }
 
 void FDPACVerifier::PACTypeExecuteInternal() {
-    util::Benchmarked b{"PAC-Man"};
     auto vec_to_str = [](auto const& vec) -> std::string {
         std::ostringstream oss;
         oss << '{';
@@ -138,6 +137,7 @@ void FDPACVerifier::PACTypeExecuteInternal() {
     LOG_INFO("Verifying FD PAC {} -> {} with LHS Deltas = {}", vec_to_str(lhs_indices_),
              vec_to_str(rhs_indices_), vec_to_str(lhs_Deltas_));
 
+    util::Benchmarked b{"PAC-Man"};
     auto emp_probabilities = CalculateEmpiricalProbabilities(*sorted_gamma_);
     auto [epsilon, delta] = FindEpsilonDelta(std::move(emp_probabilities));
     // By definition, FD PAC may have different epsilons for each RHS column, but this algo cannot

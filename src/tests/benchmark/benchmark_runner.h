@@ -73,6 +73,23 @@ public:
         benchmarks_.erase(bm_name);
     }
 
+    template <typename Algo>
+    std::string RegisterPACHighlightBenchmark(CSVConfig const& csv, algos::StdParamsMap&& other_params) {
+        std::ostringstream name;
+        name << GetAlgoName(typeid(Algo).name()) << ", " << csv.path.stem().string();
+
+        other_params[config::names::kCsvConfig] = csv;
+
+        auto bm_body = [other_params] {
+            auto algo = algos::CreateAndLoadAlgorithm<Algo>(other_params);
+            algo->Execute();
+            algo->GetHighlights(1, 10);
+        };
+
+        RegisterBenchmark(name.str(), bm_body);
+        return name.str();
+    }
+
     /// @brief Run all registered benchmarks
     void ExecuteAll() {
         for (auto& [name, benchmark_body] : benchmarks_) {

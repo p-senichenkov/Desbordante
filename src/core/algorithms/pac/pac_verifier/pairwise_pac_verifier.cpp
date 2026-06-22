@@ -10,13 +10,11 @@
 
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/util/tuple_pair.h"
-#include "core/util/benchmarked.h"
 #include "core/util/logger.h"
 
 namespace algos::pac_verifier {
 std::vector<PACVerifier::EpsilonDelta> PairWisePACVerifier::CalculateEmpiricalProbabilities(
         std::vector<TuplePair> const& sorted_pairs) const {
-    util::Benchmarked b{"Pairwise Calculate empirical probabilities"};
     // NOTE: A 10^6-row table (which is an ordinary case) will contain 10^12 pairs.
     // But if all these TuplePair objects fit in memory, std::size_t will be guaranteed to
     // be large enough to hold their number
