@@ -80,7 +80,9 @@ inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
 
 #if 0
     BenchmarkMediumIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
+#if 0
     BenchmarkLargeIowas<algos::pac_verifier::DomainPACVerifier>(runner, domain_pac_options);
+#endif
 #endif
 
 #if 0
