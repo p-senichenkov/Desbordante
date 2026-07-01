@@ -59,6 +59,7 @@ CSVConfig const kMetricCoords = CreateCsvConfig("MetricCoords.csv", ';', true);
 CSVConfig const kMetricMovies = CreateCsvConfig("MetricMovies.csv", ',', true);
 CSVConfig const kMixedWithNulls = CreateCsvConfig("MixedWithNulls.csv", ',', true);
 CSVConfig const kMushroom = CreateCsvConfig("cfd_data/mushroom.csv", ',', true);
+CSVConfig const kMushroom50k = CreateCsvConfig("mushroom50k.csv", ',', true);
 CSVConfig const kMushroomPlus2attr1500 = CreateCsvConfig("mushroom+2attr1500.csv", ',', true);
 CSVConfig const kMushroomPlus3attr1300 = CreateCsvConfig("mushroom+3attr1300.csv", ',', true);
 CSVConfig const kNeighbors10k = CreateCsvConfig("neighbors10k.csv", ',', true);

@@ -2,7 +2,8 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "click>=8.2.0, <9",
-#     "matplotlib>=3.11.0, <4"
+#     "matplotlib>=3.11.0, <4",
+#     "PyQt6>=6.0"
 # ]
 # ///
 
@@ -34,16 +35,7 @@ def read_file(fname: Path) -> list[StageResult]:
 def read_files(fnames: dict[str, Path]) -> dict[str, list[StageResult]]:
     result = {}
     for algo_name, fname in fnames.items():
-        print(algo_name)
         result[algo_name] = read_file(fname)
-        print(
-            "\n".join(
-                [
-                    f"\t{stage_res.stage_name}: {stage_res.mean}±{stage_res.half_conf_int}ms"
-                    for stage_res in result[algo_name]
-                ]
-            )
-        )
     return result
 
 
@@ -75,9 +67,12 @@ def build_plots(results: dict[str, list[StageResult]]) -> None:
                 assert False, f"No {phase2label[0]} for {algo_name}"
             means[algo_name] = algo_means
 
-    plt.yscale("log")
-    plt.grouped_bar(means, tick_labels=stage_names)
-    plt.legend()
+    fig, ax = plt.subplots(layout="constrained")
+    ax.set_yscale("log")
+    ax.tick_params("x", rotation=45, rotation_mode="xtick")
+
+    ax.grouped_bar(means, tick_labels=stage_names)
+    ax.legend()
     plt.show()
 
 

@@ -49,6 +49,7 @@ extern CSVConfig const kMetricCoords;
 extern CSVConfig const kMetricMovies;
 extern CSVConfig const kMixedWithNulls;
 extern CSVConfig const kMushroom;
+extern CSVConfig const kMushroom50k;
 extern CSVConfig const kMushroomPlus2attr1500;
 extern CSVConfig const kMushroomPlus3attr1300;
 extern CSVConfig const kNeighbors10k;
