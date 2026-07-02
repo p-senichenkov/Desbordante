@@ -76,7 +76,7 @@ def cli():
 @click.option("-e", "--executable", default="./Desbordante.benchmark")
 @click.option("-n", "--num-runs", default=20)
 @click.option("-d", "--res-dir", default=time.ctime())
-def results(executable: str, num_runs: int, res_dir: str, mode: str):
+def results(executable: str, num_runs: int, res_dir: str):
     results_dir = Path("results") / res_dir
     shutil.rmtree(results_dir, ignore_errors=True)
     results_dir.mkdir(parents=True)

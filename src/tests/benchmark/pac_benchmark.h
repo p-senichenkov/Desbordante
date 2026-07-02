@@ -193,17 +193,12 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
 #if 1
     attr_bench.BenchmarkDomainPAC();
 #endif
-#if 0
+#if 1
     attr_bench.BenchmarkFDPAC();
 #endif
-#if 0
+#if 1
     attr_bench.BenchmarkUCCPAC();
 #endif
 #endif
-
-    // runner.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(
-    //         kMushroom50k, {{kColumnIndices, config::IndicesType{0, 1, 2, 3, 4, 5, 6}},
-    //                        {kDomain, std::shared_ptr<pac::model::IDomain>{new pac::model::Ball(
-    //                                          std::vector<std::string>(7, "a"), 15)}}});
 }
 }  // namespace benchmark
