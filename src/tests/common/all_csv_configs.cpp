@@ -13,6 +13,7 @@ CSVConfig CreateCsvConfig(std::string_view filename, char separator, bool has_he
 }
 }  // namespace
 
+CSVConfig const kUniformWide = CreateCsvConfig("pac_data/uniform-wide.csv", ',', true);
 CSVConfig const kAbalone = CreateCsvConfig("abalone.csv", ',', false);
 CSVConfig const kACShippingDates = CreateCsvConfig("ACShippingDates.csv", ',', true);
 CSVConfig const kAdult = CreateCsvConfig("adult.csv", ';', false);

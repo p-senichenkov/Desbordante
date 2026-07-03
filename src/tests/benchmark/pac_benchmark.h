@@ -5,6 +5,7 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <utility>
 
 #include "core/algorithms/algo_factory.h"
@@ -102,8 +103,9 @@ inline void BenchmarkIowas4attr(BenchmarkRunner& runner) {
 
 class AttributeBenchmarks {
 private:
-    inline static auto const kDataset = tests::kMushroom50k;
+    inline static auto const kDataset = tests::kUniformWide;
     inline static std::vector<std::size_t> const kArities = {2, 4, 6, 10, 15, 20};
+
     BenchmarkRunner& runner_;
 
     static config::IndicesType Range(std::size_t start, std::size_t end) {
@@ -121,9 +123,8 @@ private:
         auto indices = Range(0, attr_num);
         std::vector<std::string> centers;
         centers.reserve(attr_num);
-        std::ranges::transform(indices, std::back_inserter(centers), [](config::IndexType idx) {
-            return std::string{static_cast<char>('a' + idx)};
-        });
+        std::ranges::transform(indices, std::back_inserter(centers),
+                               [](config::IndexType idx) { return std::to_string(idx); });
         std::ostringstream name_suffix;
         name_suffix << attr_num << " attributes";
         runner_.RegisterSimpleBenchmark<algos::pac_verifier::DomainPACVerifier>(

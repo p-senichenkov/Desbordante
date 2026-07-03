@@ -8,16 +8,12 @@
 # ///
 
 from pathlib import Path
-import re
 from dataclasses import dataclass
 
 from matplotlib import pyplot as plt
 import click
 
 from data import Results
-
-STAGE_RE = re.compile("(?P<stage_name>.+)")
-
 
 @dataclass
 class StageResult:
