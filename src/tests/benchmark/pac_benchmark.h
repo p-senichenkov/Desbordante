@@ -106,6 +106,7 @@ private:
     inline static auto const kDataset = tests::kUniformWide;
     inline static std::vector<std::size_t> const kArities = {2, 4, 6, 10, 15, 20};
     inline static std::vector<std::size_t> const kLargeArities = {30, 40, 50, 60};
+    inline static std::vector<std::size_t> const kLARGEArities = {200, 250, 300};
 
     BenchmarkRunner& runner_;
 
@@ -168,6 +169,18 @@ public:
         }
     }
 
+    void BenchmarkLargeDomainPAC() {
+        for (auto arity : kArities) {
+            BenchmarkDomainPACAttr(arity);
+        }
+    }
+
+    void BenchmarkLARGEDomainPAC() {
+        for (auto arity : kLARGEArities) {
+            BenchmarkDomainPACAttr(arity);
+        }
+    }
+
     void BenchmarkFDPAC() {
         for (auto arity : kArities) {
             BenchmarkFDPACAttr(arity);
@@ -180,13 +193,13 @@ public:
         }
     }
 
-    void BenchmarkUCCPAC() {
-        for (auto arity : kArities) {
-            BenchmarkUCCPACAttr(arity);
+    void BenchmarkLARGEFDPAC() {
+        for (auto arity : kLARGEArities) {
+            BenchmarkFDPACAttr(arity);
         }
     }
 
-    void BenchmarkLargeUCCPAC() {
+    void BenchmarkUCCPAC() {
         for (auto arity : kArities) {
             BenchmarkUCCPACAttr(arity);
         }
@@ -213,11 +226,17 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
 #if 0
     attr_bench.BenchmarkUCCPAC();
 #endif
-#if 1
+#if 0
+    attr_bench.BenchmarkLargeDomainPAC();
+#endif
+#if 0
     attr_bench.BenchmarkLargeFDPAC();
 #endif
 #if 1
-    attr_bench.BenchmarkLargeUCCPAC();
+    attr_bench.BenchmarkLARGEDomainPAC();
+#endif
+#if 1
+    attr_bench.BenchmarkLARGEFDPAC();
 #endif
 #endif
 }
