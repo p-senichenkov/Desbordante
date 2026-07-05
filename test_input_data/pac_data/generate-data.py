@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-COLUMN_COUNT = 20
+COLUMN_COUNT = 60
 LINE_COUNT = 50_000
 
 rng = np.random.default_rng()

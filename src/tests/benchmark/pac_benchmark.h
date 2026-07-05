@@ -105,6 +105,7 @@ class AttributeBenchmarks {
 private:
     inline static auto const kDataset = tests::kUniformWide;
     inline static std::vector<std::size_t> const kArities = {2, 4, 6, 10, 15, 20};
+    inline static std::vector<std::size_t> const kLargeArities = {30, 40, 50, 60};
 
     BenchmarkRunner& runner_;
 
@@ -173,7 +174,19 @@ public:
         }
     }
 
+    void BenchmarkLargeFDPAC() {
+        for (auto arity : kLargeArities) {
+            BenchmarkFDPACAttr(arity);
+        }
+    }
+
     void BenchmarkUCCPAC() {
+        for (auto arity : kArities) {
+            BenchmarkUCCPACAttr(arity);
+        }
+    }
+
+    void BenchmarkLargeUCCPAC() {
         for (auto arity : kArities) {
             BenchmarkUCCPACAttr(arity);
         }
@@ -191,14 +204,20 @@ inline void PACBenchmark(BenchmarkRunner& runner, BenchmarkComparer&) {
 
 #if 1
     detail::AttributeBenchmarks attr_bench{runner};
-#if 1
+#if 0
     attr_bench.BenchmarkDomainPAC();
 #endif
-#if 1
+#if 0
     attr_bench.BenchmarkFDPAC();
 #endif
-#if 1
+#if 0
     attr_bench.BenchmarkUCCPAC();
+#endif
+#if 1
+    attr_bench.BenchmarkLargeFDPAC();
+#endif
+#if 1
+    attr_bench.BenchmarkLargeUCCPAC();
 #endif
 #endif
 }
