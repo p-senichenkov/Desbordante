@@ -21,12 +21,14 @@ namespace algos::pac_verifier {
 void PACVerifier::RegisterOptions() {
     DESBORDANTE_OPTION_USING;
 
-    RegisterOption(
-            Option(&min_epsilon_, kMinEpsilon, kDMinEpsilon, 0.0).SetValueCheck([](double x) {
-                if (x < 0) {
-                    throw config::ConfigurationError("Min epsilon cannot be negative");
-                }
-            }));
+    RegisterOption(Option(&min_epsilon_, kMinEpsilon, kDMinEpsilon, 0.0)
+                           .SetValueCheck([](double x) {
+                               if (x < 0) {
+                                   throw config::ConfigurationError(
+                                           "Min epsilon cannot be negative");
+                               }
+                           })
+                           .SetConditionalOpts({{{}, {kMaxEpsilon}}}));
     RegisterOption(Option(&max_epsilon_, kMaxEpsilon, kDMaxEpsilon, -1.0));
     RegisterOption(Option(&min_delta_, kMinDelta, kDMinDelta, -1.0).SetValueCheck([](double x) {
         if (x > 1) {
@@ -134,7 +136,7 @@ void PACVerifier::LoadDataInternal() {
 void PACVerifier::MakeExecuteOptsAvailable() {
     using namespace config::names;
 
-    MakeOptionsAvailable({kMinEpsilon, kMaxEpsilon, kMinDelta, kDeltaSteps, kDiagonalThreshold});
+    MakeOptionsAvailable({kMinEpsilon, kMinDelta, kDeltaSteps, kDiagonalThreshold});
 }
 
 std::ranges::subrange<std::vector<PACVerifier::EpsilonDelta>::const_iterator>
