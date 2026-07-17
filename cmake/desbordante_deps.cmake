@@ -52,7 +52,7 @@ if(DESBORDANTE_BUILD_TESTS)
     CPMAddPackage(
         NAME googletest
         GITHUB_REPOSITORY google/googletest
-        VERSION 1.14.0
+        VERSION 1.17.0
         OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt"
     )
     # Workaround for googletest bug with char conversions, being recognized by Clang 21+
