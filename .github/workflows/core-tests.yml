@@ -13,8 +13,8 @@ on:
       #- pyproject.toml
       #- examples/**
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
     #paths-ignore:
       #- docs/**
       #- README.md
