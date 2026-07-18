@@ -18,7 +18,7 @@
 #include <pybind11/typing.h>
 
 #include "core/algorithms/algebraic_constraints/bin_operation_enum.h"
-#include "core/algorithms/cfd/enums.h"
+#include "core/algorithms/cfd/fd_first/enums.h"
 #include "core/algorithms/cfd/model/raw_cfd.h"
 #include "core/algorithms/cind/types.h"
 #include "core/algorithms/dd/dd.h"

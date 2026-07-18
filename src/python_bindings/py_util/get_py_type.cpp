@@ -16,7 +16,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl/filesystem.h>
 
-#include "core/algorithms/cfd/enums.h"
+#include "core/algorithms/cfd/fd_first/enums.h"
 #include "core/algorithms/cfd/model/raw_cfd.h"
 #include "core/algorithms/dd/dd.h"
 #include "core/algorithms/gdd/gdd.h"
