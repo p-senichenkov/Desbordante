@@ -43,8 +43,6 @@ private:
 
     std::shared_ptr<model::ColumnLayoutTypedRelationData> typed_relation_;
 
-    void RegisterOptions();
-
     /// @brief Remove extra pairs from empirical_probabilities
     std::ranges::subrange<std::vector<EpsilonDelta>::const_iterator> BuildECDF(
             std::vector<EpsilonDelta>& empirical_probabilities) const;
@@ -67,20 +65,16 @@ private:
     }
 
 protected:
-    // Input table must be registered in concrete classes to allow setting conditional options on it
-    // Therefore, we need a protected data member here
-    config::InputTable input_table_;
-
     // Threshold for floating-point comparison of distances
     constexpr static double kDistThreshold = 1e-12;
 
-    double MinDelta() const {
-        return min_delta_;
-    }
-
-    std::size_t DeltaSteps() const {
-        return delta_steps_;
-    }
+    config::InputTable input_table_;
+    double min_epsilon_;
+    double max_epsilon_;
+    double min_delta_ = 0;
+    double max_delta_ = 1;
+    double diagonal_threshold_;
+    unsigned long delta_steps_;
 
     double Delta() const {
         return delta_;
@@ -100,7 +94,6 @@ protected:
     PACValidationMode SelectMode();
 
     virtual void LoadDataInternal() override;
-    virtual void MakeExecuteOptsAvailable() override;
 
     /// @brief Prepare data for validating concrete PAC type.
     /// Called after processing options.
@@ -117,12 +110,5 @@ protected:
     /// Must return the minimal possible epsilon when the requested @c epsilon is too small to get
     /// epsilon-delta for it
     virtual EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const = 0;
-
-public:
-    PACVerifier() : Algorithm() {
-        RegisterOptions();
-    }
-
-    virtual ~PACVerifier() = default;
 };
 }  // namespace algos::pac_verifier

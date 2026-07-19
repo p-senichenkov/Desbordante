@@ -84,6 +84,9 @@ private:
 public:
     DomainPACVerifier();
 
+public:
+    DomainPACVerifier();
+
     model::DomainPAC const& GetPAC() const {
         if (!pac_) {
             throw std::runtime_error("Execute must be called before GetPAC");
