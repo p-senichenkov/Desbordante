@@ -107,4 +107,49 @@ void BindUCCPACVerification(pybind11::module_& pac_verification_module,
             .def("get_pac", &UCCPACVerifier::GetPAC)
             .def("get_highlights", &UCCPACVerifier::GetHighlights, "eps_1"_a = 0, "eps_2"_a = -1);
 }
+
+void BindFDPACVerification(py::module_& pac_verification_module, py::module_& algorithms_module) {
+    using namespace py::literals;
+    using namespace config::names;
+
+    py::class_<FDPACHighlight>(pac_verification_module, "FDPACHighlight")
+            .def_property_readonly("row_indices", &FDPACHighlight::RowIndices)
+            .def_property_readonly("num_pairs", &FDPACHighlight::NumPairs)
+            .def_property_readonly("string_data", &FDPACHighlight::StringData)
+            .def("__str__", &FDPACHighlight::ToString)
+            .doc() = "A set of tuple pairs that violate FD PAC.";
+
+    // Have to use low-level facility, because BindPrimitiveNoBase would overwrite ".default"
+    // attribute on each call
+    detail::RegisterAlgorithm<FDPACVerifier, algos::Algorithm>(algorithms_module, "FDPACVerifier")
+            .def("get_pac", &FDPACVerifier::GetPAC)
+            .def("get_highlights", &FDPACVerifier::GetHighlights, "eps_1"_a = 0, "eps_2"_a = -1)
+            .def(
+                    "verify",
+                    [](FDPACVerifier& verifier, double epsilon, double delta) {
+                        algos::ConfigureFromMap(verifier, {
+                                                                  {kMinEpsilon, epsilon},
+                                                                  {kMaxEpsilon, epsilon},
+                                                                  {kMinDelta, delta},
+                                                          });
+                        verifier.Execute();
+                    },
+                    "Verify PAC with given epsilon or delta", "epsilon"_a = -1, "delta"_a = -1);
+}
+
+void BindUCCPACVerification(pybind11::module_& pac_verification_module,
+                            pybind11::module_& algorithms_module) {
+    using namespace py::literals;
+
+    py::class_<UCCPACHighlight>(pac_verification_module, "UCCPACHighlight")
+            .def_property_readonly("row_indices", &UCCPACHighlight::RowIndices)
+            .def_property_readonly("num_pairs", &UCCPACHighlight::NumPairs)
+            .def_property_readonly("string_data", &UCCPACHighlight::StringData)
+            .def("__str__", &UCCPACHighlight::ToString)
+            .doc() = "A set of tuple pairs that violate UCC PAC.";
+
+    detail::RegisterAlgorithm<UCCPACVerifier, algos::Algorithm>(algorithms_module, "UCCPACVerifier")
+            .def("get_pac", &UCCPACVerifier::GetPAC)
+            .def("get_highlights", &UCCPACVerifier::GetHighlights, "eps_1"_a = 0, "eps_2"_a = -1);
+}
 }  // namespace python_bindings

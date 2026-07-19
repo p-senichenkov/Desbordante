@@ -206,6 +206,7 @@ constexpr auto kDMinDelta =
         "(default is 0 if min_eps or max_eps is passed, 0.9 otherwise).";
 constexpr auto kDPACDelta = "The exact value of delta to find the corresponding epsilon";
 extern std::string_view const kDPACValidationMode;
+constexpr auto kDHistogramMultiplier = "Histgoram bucket count multiplier.";
 // Pyro
 constexpr auto kDCustomRandom =
         "seed for the custom random generator. Used for consistency of results across platforms.";

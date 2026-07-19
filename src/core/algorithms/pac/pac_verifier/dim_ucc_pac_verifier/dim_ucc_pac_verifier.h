@@ -1,0 +1,50 @@
+#pragma once
+
+#include "core/algorithms/pac/model/tuple.h"
+#include "core/algorithms/pac/pac_verifier/pac_verifier.h"
+#include "core/algorithms/pac/ucc_pac.h"
+#include "core/config/custom_metric/custom_vector_metric/type.h"
+#include "core/config/indices/type.h"
+#include "core/config/names.h"
+
+namespace algos::pac_verifier {
+// UCC PAC verifier without highlights
+// Provides some base for optimizations
+class DimUCCPACVerifier : public PACVerifier {
+private:
+    void MakeExecuteOptsAvailable() override {
+        using namespace config::names;
+
+        MakeOptionsAvailable({kMinEpsilon, kDiagonalThreshold});
+    }
+
+protected:
+    config::IndicesType column_indices_;
+    config::CustomVectorMetricOptionType metric_option_;
+    config::CustomVectorMetricOptionType metric_opt_;
+    config::CustomVectorMetricType metric_;
+
+    std::vector<pac::model::Tuple> tuples_;
+
+    std::optional<model::UCCPAC> pac_;
+
+    void ResetState() override {
+        pac_ = std::nullopt;
+    }
+
+    void PreparePACTypeData() override;
+
+public:
+    DimUCCPACVerifier();
+
+    model::UCCPAC const& GetPAC() const {
+        if (!pac_) {
+            throw std::runtime_error("Execute must called before GetPAC");
+        }
+        return *pac_;
+    }
+
+    virtual model::UCCPAC const& FindEpsilon(double delta) = 0;
+    virtual model::UCCPAC const& FindDelta(double epsilon) = 0;
+};
+}  // namespace algos::pac_verifier
