@@ -6,18 +6,19 @@
 #include "core/algorithms/ind/mind/mind.h"
 
 #include <algorithm>
+#include <memory>
 #include <unordered_set>
 
-#include "core/algorithms/create_algorithm.h"
 #include "core/algorithms/ind/ind_algorithm.h"
+#include "core/algorithms/ind/spider/spider.h"
 #include "core/config/error/option.h"
 #include "core/config/error/type.h"
 #include "core/config/max_arity/option.h"
-#include "core/config/names_and_descriptions.h"
 #include "core/config/tabular_data/input_table_type.h"
 #include "core/model/table/column_combination.h"
 #include "core/model/table/dataset_stream_fixed.h"
 #include "core/model/table/dataset_stream_projection.h"
+#include "core/model/table/tuple_index.h"
 
 namespace algos {
 
@@ -33,7 +34,7 @@ void Mind::MakeLoadOptsAvailable() {
      * At the moment we only have one algorithm for mining unary approximate inds.
      * In the future we should give the user the ability to choose the algorithm.
      */
-    auind_algo_ = CreateAlgorithmInstance<INDAlgorithm>(AlgorithmType::kSpider);
+    auind_algo_ = std::make_unique<Spider>();
 }
 
 void Mind::MakeExecuteOptsAvailable() {
