@@ -90,7 +90,7 @@ jobs:
 
           if [[ "${{matrix.cfg.BUILD_TYPE}}" == "Debug" ]]; then
             ./build.sh --debug --sanitizer=${{ matrix.cfg.SANITIZER }} \
-              --cmake-opt='${{ matrix.cfg.CMAKE_OPTS }}'
+              --cmake-opts='${{ matrix.cfg.CMAKE_OPTS }}'
           else
             ./build.sh
           fi
