@@ -31,7 +31,9 @@ import click
     "-s",
     "--sanitizer",
     type=click.Choice(["ADDRESS", "UB"]),
-    help="Build with sanitizer (has effect only for debug build)",
+    multiple=True,
+    help="Build with sanitizer (has effect only for debug build). "
+    "Multiple values can be passed, however only ADDRESS and UB sanitizers can be ran together",
 )
 @click.option("-l", "--lto", is_flag=True, help="Enable link-time optimization")
 @click.option(
@@ -70,7 +72,7 @@ def main(
     benchmark: bool,
     parallel: int | None,
     debug: bool,
-    sanitizer: str | None,
+    sanitizer: list[str],
     lto: bool,
     gdb_debug: bool,
     no_fetch_datasets: bool,
@@ -102,7 +104,8 @@ def main(
         cmake_args.append("-DCMAKE_BUILD_TYPE=Release")
 
     if sanitizer:
-        cmake_args.append(f"-DDESBORDANTE_SANITIZER={sanitizer}")
+        sanitizer_opt = ";".join(sanitizer)
+        cmake_args.append(f"-DDESBORDANTE_SANITIZERS={sanitizer_opt}")
 
     if log_level:
         cmake_args.append(f"-DDESBORDANTE_LOG_LEVEL={log_level}")
