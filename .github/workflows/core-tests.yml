@@ -89,10 +89,10 @@ jobs:
           export ${{ matrix.system.env }}
 
           if [[ "${{matrix.cfg.BUILD_TYPE}}" == "Debug" ]]; then
-            ./build.sh --debug --sanitizer=${{ matrix.cfg.SANITIZER }} \
+            uv run build.py --debug --sanitizer=${{ matrix.cfg.SANITIZER }} \
               --cmake-opts='${{ matrix.cfg.CMAKE_OPTS }}'
           else
-            ./build.sh
+            uv run build.py
           fi
       - name: Test
         working-directory: ${{github.workspace}}/build
