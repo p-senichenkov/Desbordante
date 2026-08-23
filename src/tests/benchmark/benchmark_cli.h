@@ -14,6 +14,8 @@ constexpr static auto kBaselineOption = "baseline,b";
 constexpr static auto kBaselineLongOption = "baseline";
 constexpr static auto kOutputOption = "output,o";
 constexpr static auto kOutputLongOption = "output";
+constexpr static auto kNameOption = "name,n";
+constexpr static auto kNameLongOption = "name";
 
 class BenchmarkCLI {
 private:
