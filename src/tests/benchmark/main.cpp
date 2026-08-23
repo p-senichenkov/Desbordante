@@ -32,9 +32,6 @@ int main(int argc, char* argv[]) {
          {ADCBenchmark, DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark}) {
         test_register_func(bm_runner, bm_comparer);
     }
-    bm_runner.ExecuteAll();
-
-    auto results = bm_runner.BenchmarkResults();
 
     BenchmarkCLI benchmark_cli;
     try {
@@ -48,6 +45,14 @@ int main(int argc, char* argv[]) {
         benchmark_cli.PrintHelp();
         return EXIT_SUCCESS;
     }
+
+    if (var_map.contains(kNameLongOption)) {
+        bm_runner.Execute(var_map[kNameLongOption].as<std::string>());
+        return EXIT_SUCCESS;
+    }
+
+    bm_runner.ExecuteAll();
+    auto results = bm_runner.BenchmarkResults();
 
     // Succeed if there's nothing to compare
     auto success = true;
