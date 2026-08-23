@@ -1,9 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <format>
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -30,6 +32,14 @@ private:
             return demangled_name;
         }
         return demangled_name.substr(colon_pos + 1);
+    }
+
+    unsigned long Execute(BenchmarkBody const& body) {
+        auto start = std::chrono::steady_clock::now();
+        body();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::steady_clock::now() - start)
+                .count();
     }
 
 public:
@@ -77,13 +87,18 @@ public:
     void ExecuteAll() {
         for (auto& [name, benchmark_body] : benchmarks_) {
             std::cout << "** " << name << "... **\n";
-            auto start = std::chrono::steady_clock::now();
-            benchmark_body();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                   std::chrono::steady_clock::now() - start)
-                                   .count();
-            std::cout << "** " << name << ": " << elapsed / 1000 << "s **\n";
+            auto elapsed = Execute(benchmark_body);
             bm_results_.emplace(name, elapsed);
+            std::cout << "** " << name << ": " << elapsed / 1000 << "s **\n";
+        }
+    }
+
+    void Execute(std::string const& name) {
+        try {
+            auto elapsed = Execute(benchmarks_.at(name));
+            std::cout << elapsed << '\n';
+        } catch (std::out_of_range const&) {
+            throw std::out_of_range(std::format("No benchmark named '{}'", name));
         }
     }
 
