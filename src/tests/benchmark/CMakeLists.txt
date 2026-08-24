@@ -16,6 +16,9 @@ target_link_libraries(
             ${DESBORDANTE_PREFIX}::fd::aid
             ${DESBORDANTE_PREFIX}::md::hy
             ${DESBORDANTE_PREFIX}::md::hy::preprocessing
+            ${DESBORDANTE_PREFIX}::pac::verifier::domain_pac_verifier
+            ${DESBORDANTE_PREFIX}::pac::verifier::fd_pac_verifier
+            ${DESBORDANTE_PREFIX}::pac::verifier::ucc_pac_verifier
             ${DESBORDANTE_PREFIX}::nar::des
             ${DESBORDANTE_PREFIX}.compile_feats
             Boost::program_options
