@@ -242,3 +242,5 @@ endif()
 if(DESBORDANTE_BINDINGS)
     add_subdirectory("src/python_bindings")
 endif()
+
+add_subdirectory("src/tests/memory")
