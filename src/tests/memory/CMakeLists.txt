@@ -9,4 +9,5 @@ target_link_libraries(
             ${DESBORDANTE_PREFIX}::pac::verifier::ucc_pac_verifier
             ${DESBORDANTE_PREFIX}.compile_feats
             ${DESBORDANTE_PREFIX}::testlib::common
+            spdlog::spdlog_header_only
 )
