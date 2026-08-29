@@ -1,9 +1,7 @@
 #pragma once
 
-#include <memory>
-
-#include "core/util/custom_metric/custom_metric.h"
+#include "core/util/custom_metric/custom_metric_holder.h"
 
 namespace config {
-using CustomMetricType = std::shared_ptr<util::ICustomMetric>;
+using CustomMetricType = util::CustomMetricHolder;
 }  // namespace config

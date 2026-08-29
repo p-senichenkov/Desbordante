@@ -25,6 +25,15 @@ public:
 
     virtual double Dist(model::Type const* type, std::byte const* first,
                         std::byte const* second) const = 0;
+
+    virtual double Dist(model::IMetrizableType const* type, std::byte const* first,
+                        std::byte const* second) const {
+        return Dist(static_cast<model::Type const*>(type), first, second);
+    }
+
+    virtual bool RequiresMetrizableType() const {
+        return false;
+    }
 };
 
 /// @brief Provides a convenient way to define custom metric, when column type is known in advance
@@ -85,12 +94,26 @@ private:
     }
 
 public:
+    // TODO(p-senichenkov): simply throw here? I. e. disallow direct calls (not through
+    // CustomMetricHolder)
     double Dist(model::Type const* type, std::byte const* first,
                 std::byte const* second) const override {
         if (!first || !second) {
             return 0;
         }
-        return ConvertType(type)->Dist(first, second);
+        return Dist(ConvertType(type), first, second);
+    }
+
+    double Dist(model::IMetrizableType const* type, std::byte const* first,
+                std::byte const* second) const override {
+        if (!first || !second) {
+            return 0;
+        }
+        return type->Dist(first, second);
+    }
+
+    bool RequiresMetrizableType() const override {
+        return true;
     }
 };
 }  // namespace util
