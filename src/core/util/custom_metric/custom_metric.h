@@ -28,7 +28,7 @@ public:
     /// Even though interface doesn't bind TypedMetric to a column, it is highly recommended to use
     /// a dedicated TypedMetric for each column to avoid unexpected results (because this type is
     /// generally user-defined)
-    class ITypedMetric {
+    class DESBORDANTE_EXPORT ITypedMetric {
     public:
         virtual ~ITypedMetric() = default;
         virtual double operator()(std::byte const* a, std::byte const* b) const = 0;
@@ -39,7 +39,7 @@ public:
     // NOTE: column_name should be used only to emit more informative error messages.
     // Do not try to reconstruct any column info depending on it
     virtual std::unique_ptr<ITypedMetric> SetType(model::Type const* type,
-                                                  std::string const& column_name = "") const;
+                                                  std::string const& column_name = "") const = 0;
 };
 
 /// @brief Provides a convenient way to define custom metric, when column type is known in advance
