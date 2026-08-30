@@ -200,9 +200,10 @@ elseif(UBSAN)
     set(DEBUG_LINK_OPTS "${UBSAN_OPTS}")
 endif()
 
-if(DESBORDANTE_GDB_SYMBOLS)
-    add_compile_options(-ggdb3)
-endif()
+# if(DESBORDANTE_GDB_SYMBOLS)
+#     add_compile_options(-ggdb3)
+# endif()
+add_compile_options(-gdwarf)
 
 add_compile_options("$<$<CONFIG:Debug>:${DEBUG_BUILD_OPTS}>")
 add_link_options("$<$<CONFIG:Debug>:${DEBUG_LINK_OPTS}>")
