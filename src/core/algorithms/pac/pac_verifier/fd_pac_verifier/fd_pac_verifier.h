@@ -13,9 +13,9 @@
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/pairwise_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/util/tuple_pair.h"
-#include "core/config/custom_metric/custom_metrics/type.h"
 #include "core/config/indices/type.h"
 #include "core/model/types/type.h"
+#include "core/util/custom_metric/custom_metrics_holder.h"
 
 namespace algos::pac_verifier {
 // FD PAC X -> Y specifies that
@@ -65,8 +65,8 @@ private:
     std::shared_ptr<Types> lhs_types_;
     std::shared_ptr<Types> rhs_types_;
 
-    config::CustomMetricsType lhs_metrics_;
-    config::CustomMetricsType rhs_metrics_;
+    util::CustomMetricsHolder lhs_metrics_;
+    util::CustomMetricsHolder rhs_metrics_;
 
     std::vector<double> lhs_Deltas_;
 
