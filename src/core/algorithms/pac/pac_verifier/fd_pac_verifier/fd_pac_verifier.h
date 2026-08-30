@@ -65,6 +65,8 @@ private:
     std::shared_ptr<Types> lhs_types_;
     std::shared_ptr<Types> rhs_types_;
 
+    config::CustomMetricsOptionType lhs_metrics_option_;
+    config::CustomMetricsOptionType rhs_metrics_option_;
     config::CustomMetricsType lhs_metrics_;
     config::CustomMetricsType rhs_metrics_;
 
