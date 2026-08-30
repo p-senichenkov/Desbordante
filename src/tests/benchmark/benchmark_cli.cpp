@@ -11,7 +11,9 @@ BenchmarkCLI::BenchmarkCLI() {
         (kHelpOption, "print help message")
         (kBaselineOption, po::value<std::string>(), "JSON with baseline benchmark results")
         (kOutputOption, po::value<std::string>(), "filename to save benchmark results")
-        (kNameOption, po::value<std::string>(), "name of benchmark to run. Prints only benchmark result in this mode");
+        (kNameOption, po::value<std::string>(), "name of benchmark to run. Prints only benchmark result in this mode")
+        (kListOption, "list registered benchmarks")
+    ;
     // clang-format on
 }
 }  // namespace benchmark

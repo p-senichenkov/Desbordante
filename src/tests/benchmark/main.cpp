@@ -47,6 +47,11 @@ int main(int argc, char* argv[]) {
         return EXIT_SUCCESS;
     }
 
+    if (var_map.contains(kListLongOption)) {
+        bm_runner.ListBenchmarks();
+        return EXIT_SUCCESS;
+    }
+
     if (var_map.contains(kNameLongOption)) {
         bm_runner.Execute(var_map[kNameLongOption].as<std::string>());
         return EXIT_SUCCESS;
