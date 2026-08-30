@@ -20,6 +20,18 @@ namespace util {
 // for several columns. Keep it in mind if you are planning to implement some complex internal state
 /// WARN: NULL value is represented by nullptr
 class DESBORDANTE_EXPORT ICustomMetric {
+protected:
+    static model::IMetrizableType const* TryConvertType(model::Type const* type) {
+        auto const* metr_type = dynamic_cast<model::IMetrizableType const*>(type);
+        if (!metr_type) {
+            std::ostringstream msg;
+            msg << "Cannot use default metric, because column type " << type->ToString()
+                << " is not metrizable. Consider defining custom metric";
+            throw config::ConfigurationError(msg.str());
+        }
+        return metr_type;
+    }
+
 public:
     virtual ~ICustomMetric() = default;
 
@@ -66,15 +78,41 @@ public:
 class DynamicCustomMetric : public ICustomMetric {
 private:
     using Metric = std::function<double(model::Type const*, std::byte const*, std::byte const*)>;
+    using MetricForMetrizableType = std::function<double(model::IMetrizableType const*,
+                                                         std::byte const*, std::byte const*)>;
 
+    // Exactly one of them is not nullptr
     Metric metric_;
+    MetricForMetrizableType metric_for_metrizable_type_;
 
 public:
     explicit DynamicCustomMetric(Metric metric) : metric_(std::move(metric)) {}
 
+    explicit DynamicCustomMetric(MetricForMetrizableType metric_for_metrizable_type)
+        : metric_for_metrizable_type_(std::move(metric_for_metrizable_type)) {}
+
     double Dist(model::Type const* type, std::byte const* first,
                 std::byte const* second) const override {
+        assert((metric_ == nullptr) != (metric_for_metrizable_type_ == nullptr));
+
+        if (metric_for_metrizable_type_) {
+            return metric_for_metrizable_type_(TryConvertType(type), first, second);
+        }
         return metric_(type, first, second);
+    }
+
+    double Dist(model::IMetrizableType const* type, std::byte const* first,
+                std::byte const* second) const override {
+        assert((metric_ == nullptr) != (metric_for_metrizable_type_ == nullptr));
+
+        if (metric_for_metrizable_type_) {
+            return metric_for_metrizable_type_(type, first, second);
+        }
+        return metric_(type, first, second);
+    }
+
+    bool RequiresMetrizableType() const override {
+        return metric_for_metrizable_type_ != nullptr;
     }
 };
 
@@ -82,17 +120,6 @@ public:
 /// Uses default metric for the type. Works only with metrizable types
 class DefaultCustomMetric : public ICustomMetric {
 private:
-    static model::IMetrizableType const* ConvertType(model::Type const* type) {
-        auto const* metr_type = dynamic_cast<model::IMetrizableType const*>(type);
-        if (!metr_type) {
-            std::ostringstream msg;
-            msg << "Cannot use default metric, because column type " << type->ToString()
-                << " is not metrizable. Consider defining custom metric";
-            throw config::ConfigurationError(msg.str());
-        }
-        return metr_type;
-    }
-
 public:
     // TODO(p-senichenkov): simply throw here? I. e. disallow direct calls (not through
     // CustomMetricHolder)
@@ -101,7 +128,7 @@ public:
         if (!first || !second) {
             return 0;
         }
-        return Dist(ConvertType(type), first, second);
+        return Dist(TryConvertType(type), first, second);
     }
 
     double Dist(model::IMetrizableType const* type, std::byte const* first,
