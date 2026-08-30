@@ -106,5 +106,11 @@ public:
     std::unordered_map<std::string, long long> const& BenchmarkResults() const {
         return bm_results_;
     }
+
+    void ListBenchmarks() const {
+        for (auto const& [name, _] : benchmarks_) {
+            std::cout << name << '\n';
+        }
+    }
 };
 }  // namespace benchmark

@@ -16,6 +16,8 @@ constexpr static auto kOutputOption = "output,o";
 constexpr static auto kOutputLongOption = "output";
 constexpr static auto kNameOption = "name,n";
 constexpr static auto kNameLongOption = "name";
+constexpr static auto kListOption = "list,l";
+constexpr static auto kListLongOption = "list";
 
 class BenchmarkCLI {
 private:
