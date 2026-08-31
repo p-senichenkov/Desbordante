@@ -15,7 +15,7 @@
 #include "core/algorithms/pac/model/idomain.h"
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/fd_pac_verifier/fd_pac_verifier.h"
-#include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
+// #include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
 #include "core/config/column_index/type.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
@@ -44,8 +44,8 @@ inline void BenchmarkIowaLowArities(BenchmarkRunner& runner, CSVConfig const& cs
             {{kLhsIndices, config::IndicesType{2, 3}}, {kRhsIndices, config::IndicesType{8, 9}}},
             kSuffix);
 
-    runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
-            csv_config, {{kColumnIndices, config::IndicesType{2, 3, 8, 7}}}, kSuffix);
+    // runner.RegisterSimpleBenchmark<algos::pac_verifier::UCCPACVerifier>(
+    //         csv_config, {{kColumnIndices, config::IndicesType{2, 3, 8, 7}}}, kSuffix);
 }
 
 inline void BenchmarkIowasLowArities(BenchmarkRunner& runner) {
