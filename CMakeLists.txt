@@ -118,11 +118,11 @@ endif()
 set(RELEASE_BUILD_OPTS ${BUILD_OPTS})
 set(DEBUG_BUILD_OPTS "${BUILD_OPTS}")
 
-if(DESBORDANTE_CI_REDUCED_DEBUG_INFO)
-    set(DESBORDANTE_DEBUG_INFO_FLAG "-g1")
-else()
-    set(DESBORDANTE_DEBUG_INFO_FLAG "-g")
-endif()
+# if(DESBORDANTE_CI_REDUCED_DEBUG_INFO)
+#     set(DESBORDANTE_DEBUG_INFO_FLAG "-g1")
+# else()
+#     set(DESBORDANTE_DEBUG_INFO_FLAG "-g")
+# endif()
 
 # Set common DEBUG build options
 string(
