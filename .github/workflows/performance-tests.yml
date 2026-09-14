@@ -83,6 +83,9 @@ jobs:
           run-id: ${{ env.LastSuccID }}
           github-token: ${{ secrets.PERFORMANCEREGRESSIONTESTING }}
         if: ${{ env.LastSuccID != '' }}
+      # All next steps should be ran even if this one has failed
+      # Some of them may fail in that case, but it's not a problem
+
       - name: Check baseline results
         # Each successful run must have a "baseline" attached.
         # If not, there's no baseline at all; use latest instead.
@@ -96,6 +99,7 @@ jobs:
           else
             echo 'Warning: no baseline and no latest results found'
           fi
+        if: ${{ !cancelled() }}
 
       - name: Test
         working-directory: ${{github.workspace}}/build/target
@@ -122,9 +126,8 @@ jobs:
             echo '::error::Killed by timeout'
           fi
           exit "$EXIT_CODE"
+        if: ${{ !cancelled() }}
 
-      # All next steps should be ran even if this one has failed
-      # Some of them may fail in that case, but it's not a problem
       - uses: actions/upload-artifact@v6
         with:
           name: results-v2
@@ -143,8 +146,8 @@ jobs:
             .venv/bin/python3 -m uv run src/tests/benchmark/display_benchmarks.py \
               --old_results old-results --curr_results curr-results.json --output plots.pdf
           fi
-
         if: ${{ !cancelled() }}
+
       - uses: actions/upload-artifact@v6
         with:
           name: plots.pdf
