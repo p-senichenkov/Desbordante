@@ -1,0 +1,32 @@
+name: Dummy
+on:
+  push:
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    env:
+      force-upload-current-results: false
+    steps:
+      - name: Test
+        # Disable '-e' in this step
+        shell: bash --noprofile --norc -o pipefail {0}
+        run: |
+          # 256 Kb should be enough to exit gracefully
+          MEMORY_LIMIT=1G
+          TIME_LIMIT='5400' # 1.5 hours
+
+          echo "Memory limit: $MEMORY_LIMIT, time limit: $TIME_LIMIT"
+          ulimit
+
+          systemd-run --user --scope -p MemoryMax="$MEMORY_LIMIT" -p RuntimeMaxSec="$TIME_LIMIT" \
+            echo 'Hello'
+          EXIT_CODE="$?"
+
+          if [ "$EXIT_CODE" -eq 137 ]; then
+            echo '::error::Out of memory'
+          elif [ "$EXIT_CODE" -eq 143 ]; then
+            echo '::error::Killed by timeout'
+          fi
+          exit "$EXIT_CODE"
+        if: ${{ !cancelled() }}
