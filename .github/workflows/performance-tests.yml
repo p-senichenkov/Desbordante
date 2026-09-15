@@ -7,6 +7,7 @@ on:
   schedule:
     - cron: 30 3 * * 6
   workflow_dispatch:
+  push:
 
 concurrency:
   # ref will be always the same (`main`) for schedule, and can be set manually for workflow-dispatch
@@ -23,6 +24,7 @@ jobs:
     env:
       # Number of run IDs to select
       num-runs: 10
+      force-upload-current-results: false
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
@@ -98,6 +100,7 @@ jobs:
             cp $FILENAME baseline.json
           else
             echo 'Warning: no baseline and no latest results found'
+            echo 'force-upload-current-results=true' >> "$GITHUB_ENV"
           fi
         if: ${{ !cancelled() }}
 
@@ -159,9 +162,10 @@ jobs:
       # Otherwise, baseline is simply being duplicated.
       - name: Update baseline
         run: cp curr-results.json baseline.json
-        if: success()
+        if: success() || env.force-upload-current-results == 'true'
       - name: Upload baseline
         uses: actions/upload-artifact@v6
         with:
           name: baseline-v2
           path: baseline.json
+        if: ${{ !cancelled() }}
