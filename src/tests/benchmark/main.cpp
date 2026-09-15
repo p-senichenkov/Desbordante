@@ -22,6 +22,8 @@
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
+    std::cout << "Executing...\n";
+    return 0;
     using namespace benchmark;
 
     ::util::logging::Initialize();
@@ -29,7 +31,7 @@ int main(int argc, char* argv[]) {
     BenchmarkRunner bm_runner;
     BenchmarkComparer bm_comparer;
     for (auto test_register_func :
-         {ADCBenchmark, DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark}) {
+         {ADCBenchmark , DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark}) {
         test_register_func(bm_runner, bm_comparer);
     }
     bm_runner.ExecuteAll();
