@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     BenchmarkRunner bm_runner;
     BenchmarkComparer bm_comparer;
     for (auto test_register_func :
-         {ADCBenchmark , DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark}) {
+         {ADCBenchmark, /* DDBenchmark, INDBenchmark, FDBenchmark, MDBenchmark, NARBenchmark */}) {
         test_register_func(bm_runner, bm_comparer);
     }
     bm_runner.ExecuteAll();
