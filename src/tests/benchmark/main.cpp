@@ -22,8 +22,6 @@
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
-    std::cout << "Executing...\n";
-    return 0;
     using namespace benchmark;
 
     ::util::logging::Initialize();

@@ -42,11 +42,11 @@ jobs:
         run: |
           echo ${{ secrets.PERFORMANCEREGRESSIONTESTING }} | gh auth login --with-token
 
+          mkdir -p old-results
           gh run list --repo "${{ github.repository }}" --limit ${{ env.num-runs }} \
             --workflow "${{ github.workflow }}" --json 'databaseId' --jq '[.[].databaseId]' \
             --branch "${{ github.ref_name }}" >ids.json
 
-          mkdir -p old-results
           for (( i = 0; i < ${{ env.num-runs }}; i = $i + 1 )); do
             ID=$(jq ".[$i]" ids.json)
             if [[ "$ID" = 'null' ]]; then
