@@ -36,6 +36,8 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
             "");
     comparer.SetThreshold(pyro_name, 22);
 
+// Tane requires more memory
+#if 0
     for (auto measure : magic_enum::enum_values<algos::AfdErrorMeasure>()) {
         // mu_plus is much slower than other measures
         auto dataset = measure == algos::AfdErrorMeasure::kMuPlus ? tests::kMushroomPlus2attr1500
@@ -46,6 +48,7 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
                 std::string(magic_enum::enum_name(measure)));
         comparer.SetThreshold(tane_name, 20);
     }
+#endif
 
 // EulerFD tests are currently disabled, since test below runs less than a second, and
 // for reasonable run times we need EulerFD options, which are not implemented yet
