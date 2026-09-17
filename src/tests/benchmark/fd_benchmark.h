@@ -40,10 +40,10 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
         // TODO: experiment with this
         switch (measure) {
             case algos::AfdErrorMeasure::kG1:
-                break;
             case algos::AfdErrorMeasure::kPdep:
             case algos::AfdErrorMeasure::kTau:
             case algos::AfdErrorMeasure::kMuPlus:
+                break;
             case algos::AfdErrorMeasure::kRho:
             case algos::AfdErrorMeasure::kFi:
             case algos::AfdErrorMeasure::kG2:
