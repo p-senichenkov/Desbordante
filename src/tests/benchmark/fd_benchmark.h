@@ -43,12 +43,13 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
             case algos::AfdErrorMeasure::kPdep:
             case algos::AfdErrorMeasure::kTau:
             case algos::AfdErrorMeasure::kMuPlus:
+                break;
             case algos::AfdErrorMeasure::kRho:
             case algos::AfdErrorMeasure::kFi:
-                break;
+                continue;
             case algos::AfdErrorMeasure::kG2:
             case algos::AfdErrorMeasure::kG3:
-                continue;
+                break;
         }
 
         // mu_plus is much slower than other measures
