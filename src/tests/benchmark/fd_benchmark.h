@@ -37,7 +37,6 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
     comparer.SetThreshold(pyro_name, 22);
 
     for (auto measure : magic_enum::enum_values<algos::AfdErrorMeasure>()) {
-        // TODO: experiment with this
         switch (measure) {
             case algos::AfdErrorMeasure::kG1:
             case algos::AfdErrorMeasure::kPdep:
@@ -46,8 +45,8 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
                 break;
             case algos::AfdErrorMeasure::kRho:
             case algos::AfdErrorMeasure::kFi:
-                continue;
             case algos::AfdErrorMeasure::kG2:
+                continue;
             case algos::AfdErrorMeasure::kG3:
                 break;
         }
