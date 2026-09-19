@@ -42,11 +42,11 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
             case algos::AfdErrorMeasure::kPdep:
             case algos::AfdErrorMeasure::kTau:
             case algos::AfdErrorMeasure::kMuPlus:
-                break;
+                continue;
             case algos::AfdErrorMeasure::kRho:
             case algos::AfdErrorMeasure::kFi:
             case algos::AfdErrorMeasure::kG2:
-                continue;
+                break;
             case algos::AfdErrorMeasure::kG3:
                 break;
         }
