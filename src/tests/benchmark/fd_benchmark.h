@@ -38,16 +38,14 @@ inline void FDBenchmark(BenchmarkRunner& runner, BenchmarkComparer& comparer) {
 
     for (auto measure : magic_enum::enum_values<algos::AfdErrorMeasure>()) {
         switch (measure) {
-            case algos::AfdErrorMeasure::kG1:
-            case algos::AfdErrorMeasure::kPdep:
-            case algos::AfdErrorMeasure::kTau:
-            case algos::AfdErrorMeasure::kMuPlus:
-                continue;
+            // These measures require more memory than GitHub-hosted runners have
+            // TODO(#836): Investigate Tane memory consumption and enable these benchmarks
             case algos::AfdErrorMeasure::kRho:
             case algos::AfdErrorMeasure::kFi:
             case algos::AfdErrorMeasure::kG2:
-                break;
             case algos::AfdErrorMeasure::kG3:
+                continue;
+            default:
                 break;
         }
 
