@@ -1,4 +1,5 @@
 name: Performance regression testing 2
+# zerodiff
 on:
   # This workflow runs performance regression tests:
   # - Automatically every Saturday at 3:30 AM (using `schedule` trigger).
