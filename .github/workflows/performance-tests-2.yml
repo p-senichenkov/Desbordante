@@ -1,4 +1,4 @@
-name: Performance regression testing
+name: Performance regression testing 2
 on:
   # This workflow runs performance regression tests:
   # - Automatically every Saturday at 3:30 AM (using `schedule` trigger).
@@ -19,7 +19,7 @@ concurrency:
 # so don't forget to update version tags each time format is changed
 
 jobs:
-  performance-tests:
+  performance-tests-2:
     runs-on: ubuntu-latest
     env:
       # Number of run IDs to select
