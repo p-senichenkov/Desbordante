@@ -4,7 +4,12 @@ add_subdirectory(ucc_pac_verifier)
 
 set(NAME pac.verifier)
 desbordante_add_lib(NAME OBJECT)
-target_sources(${NAME} PRIVATE pac_verifier.cpp pairwise_pac_verifier.cpp)
+target_sources(
+    ${NAME}
+    PRIVATE pac_verifier.cpp pairwise_pac_verifier.cpp
+            dim_ucc_pac_verifier/dim_ucc_pac_verifier.cpp
+            dim_ucc_pac_verifier/histogram_ucc_pac_verifier.cpp
+)
 target_link_libraries(
     ${NAME}
     PUBLIC ${DESBORDANTE_PREFIX}::algos ${DESBORDANTE_PREFIX}::config
