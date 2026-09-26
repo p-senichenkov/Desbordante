@@ -2,9 +2,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
+#include <string>
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
+#include "core/config/column_index/type.h"
 
 using namespace algos::pac_verifier;
 
@@ -67,14 +70,24 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
 }
 
 PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const {
-    throw std::runtime_error("Not implemented");
-}
-
-void HistogramUCCPACVerifier::PreparePACTypeData() {
-    // TODO: Can we build histogram here?
-    throw std::runtime_error("Not implemented");
+    auto [elem_count, upper_bound] = histogram_.GetElemCount(epsilon);
+    return {upper_bound, GetDelta(elem_count)};
 }
 
 void HistogramUCCPACVerifier::ExecuteInternal() {
-    throw std::runtime_error("Not implemented");
+    LogCommonOptions();
+
+    BuildHistogram();
+
+    auto emp_probabilities = CalculateEmpiricalProbabilities();
+    auto [epsilon, delta] = FindEpsilonDelta(std::move(emp_probabilities));
+
+    std::vector<std::string> column_names;
+    column_names.reserve(column_indices_.size());
+    auto const& columns = TypedRelation().GetSchema()->GetColumns();
+    std::ranges::transform(
+            column_indices_, std::back_inserter(column_names),
+            [&columns](config::IndexType idx) -> std::string { return columns[idx]->GetName(); });
+    auto column_indices = column_indices_;
+    pac_ = model::UCCPAC(std::move(column_indices), std::move(column_names), epsilon, delta);
 }
