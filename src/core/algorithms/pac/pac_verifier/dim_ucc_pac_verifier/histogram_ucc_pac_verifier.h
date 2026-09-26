@@ -9,7 +9,7 @@ namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
 private:
     utils::Histogram histogram_;
-    // TODO: Don't think it's necessary
+    // TODO: Don't think it's so necessary (both variables below)
     std::size_t zero_dist_pairs_ = 0;
     double max_histogram_bound_;
 
@@ -20,7 +20,6 @@ private:
     std::vector<EpsilonDelta> CalculateEmpiricalProbabilities() const;
 
     EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const override;
-    void PreparePACTypeData() override;
     void ExecuteInternal() override;
 
     void ResetState() override {
