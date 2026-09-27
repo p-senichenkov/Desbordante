@@ -16,6 +16,8 @@ private:
     // Lower bound is always 0
     // Maybe we could optimize things a little without this assumption, but I'm not sure
     double GetHistogramUpperBound() const;
+    // Error is no more than 2x
+    double GetHistogramUpperBoundApprox() const;
     void BuildHistogram();
     std::vector<EpsilonDelta> CalculateEmpiricalProbabilities() const;
 

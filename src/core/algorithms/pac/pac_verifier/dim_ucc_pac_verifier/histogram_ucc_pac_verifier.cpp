@@ -23,6 +23,18 @@ double HistogramUCCPACVerifier::GetHistogramUpperBound() const {
     return max_dist;
 }
 
+double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
+    // d(first, tuples[i]) + d(tuples[i], tuples[j]) >= d(first, tuples[j])
+    // d(tuples[i], tuples[j]) => max{d(first, tuples[i]), d(first, tuples[j])}
+    double max_dist_single_dim = 0;
+    auto const& first = tuples_->front();
+    for (auto it = std::next(tuples_->begin()); it != tuples_->end(); ++it) {
+        auto dist = metric_->Dist(tuple_type_->GetTypes(), first, *it);
+        max_dist_single_dim = std::max(max_dist_single_dim, dist);
+    }
+    return max_dist_single_dim * 2;
+}
+
 void HistogramUCCPACVerifier::BuildHistogram() {
     max_histogram_bound_ = GetHistogramUpperBound();
     histogram_ = utils::Histogram{DeltaSteps(), 0, max_histogram_bound_};
