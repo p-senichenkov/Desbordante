@@ -8,6 +8,7 @@
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/config/column_index/type.h"
+#include "core/util/logger.h"
 
 using namespace algos::pac_verifier;
 
@@ -25,7 +26,7 @@ double HistogramUCCPACVerifier::GetHistogramUpperBound() const {
 
 double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
     // d(first, tuples[i]) + d(tuples[i], tuples[j]) >= d(first, tuples[j])
-    // d(tuples[i], tuples[j]) => max{d(first, tuples[i]), d(first, tuples[j])}
+    // d(tuples[i], tuples[j]) <= 2 * max{d(first, tuples[i]), d(first, tuples[j])}
     double max_dist_single_dim = 0;
     auto const& first = tuples_->front();
     for (auto it = std::next(tuples_->begin()); it != tuples_->end(); ++it) {
@@ -36,9 +37,10 @@ double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
 }
 
 void HistogramUCCPACVerifier::BuildHistogram() {
-    max_histogram_bound_ = GetHistogramUpperBound();
-    histogram_ = utils::Histogram{DeltaSteps(), 0, max_histogram_bound_};
+    histogram_ = utils::Histogram{DeltaSteps() * kHistogramBucketCountMultiplier, 0,
+                                  GetHistogramUpperBound()};
 
+    real_max_distance_ = 0;
     for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
         for (std::size_t j = i + 1; j < tuples_->size(); ++j) {
             auto dist = metric_->Dist(tuple_type_->GetTypes(), (*tuples_)[i], (*tuples_)[j]);
@@ -46,6 +48,7 @@ void HistogramUCCPACVerifier::BuildHistogram() {
             if (dist == 0) {
                 zero_dist_pairs_ += 2;
             }
+            real_max_distance_ = std::max(real_max_distance_, dist);
         }
     }
 
@@ -68,17 +71,34 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
     for (auto const& bucket : buckets) {
         running_total += bucket.elem_count;
         auto delta = GetDelta(running_total);
-        if (delta >= MinDelta()) {
-            auto epsilon = bucket.max_bound;
-            result.emplace_back(epsilon, delta);
+        if (delta >= MaxDelta()) {
+            break;
         }
+        auto epsilon = bucket.max_bound;
+        result.emplace_back(epsilon, delta);
     }
     // Ensure that (??, max delta) is always in empirical_probabilities
     if (MaxDelta() > 1 - kDistThreshold) {
         // TODO: Seems strange
-        result.emplace_back(max_histogram_bound_, 1);
+        // TODO: Also it can produce very erroneous result -- up to 2x of real epsilon
+        result.emplace_back(real_max_distance_, 1);
     }
     return result;
+}
+
+// We don't have complex calculations with Greek letters now -- just explicitly count all pairs
+double HistogramUCCPACVerifier::GetDelta(std::size_t num_pairs) const {
+    assert(num_pairs <= total_pairs_);
+
+    double delta = static_cast<double>(num_pairs) / total_pairs_;
+    LOG_DEBUG("Delta = {} for {} pairs", delta, num_pairs);
+    assert(delta >= -PACVerifier::kDistThreshold && delta <= 1 + PACVerifier::kDistThreshold);
+    return delta;
+}
+
+double HistogramUCCPACVerifier::GetNumPairs(double delta) const {
+    assert(0 <= delta && delta <= 1);
+    return delta * total_pairs_;
 }
 
 PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const {
