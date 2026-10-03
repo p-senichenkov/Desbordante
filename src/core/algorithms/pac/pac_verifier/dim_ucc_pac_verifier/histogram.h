@@ -7,8 +7,6 @@
 #include <limits>
 #include <vector>
 
-#include "core/util/logger.h"
-
 struct Bucket {
     double min_bound;
     double max_bound;
@@ -38,8 +36,6 @@ private:
         } else {
             bucket_idx = std::distance(bucket_bounds_.begin(), next_bound) - 1;
         }
-        LOG_DEBUG("Bucket bounds size: {}, buckets size: {}, bucket idx: {}", bucket_bounds_.size(),
-                  buckets_.size(), bucket_idx);
         assert(bucket_idx < buckets_.size());
         return bucket_idx;
     }

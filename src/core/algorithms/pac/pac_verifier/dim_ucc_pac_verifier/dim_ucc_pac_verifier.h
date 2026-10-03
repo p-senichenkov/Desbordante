@@ -19,9 +19,6 @@ protected:
 
     std::optional<model::UCCPAC> pac_;
 
-    double GetNumPairs(double delta) const;
-    double GetDelta(std::size_t num_pairs) const;
-
     void ResetState() override {
         pac_ = std::nullopt;
     }

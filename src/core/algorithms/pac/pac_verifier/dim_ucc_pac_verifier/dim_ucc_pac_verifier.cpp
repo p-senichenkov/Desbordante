@@ -10,25 +10,6 @@
 
 using namespace algos::pac_verifier;
 
-double DimUCCPACVerifier::GetNumPairs(double delta) const {
-    // delta = (2 * pairs + total_tuples) / total_tuples^2
-    // => pairs = (delta * total_tuples^2 - total_tuples) / 2 =
-    //          = total_tuples * (delta * total_tuples - 1) / 2
-    double num_pairs = static_cast<double>(tuples_->size() * (delta * tuples_->size() - 1)) / 2;
-    if (num_pairs < 0) {
-        num_pairs = 0;
-    }
-    return num_pairs;
-}
-
-double DimUCCPACVerifier::GetDelta(std::size_t num_pairs) const {
-    // See "key ideas"
-    double delta =
-            static_cast<double>(2 * num_pairs + tuples_->size()) / std::pow(tuples_->size(), 2);
-    assert(delta >= -PACVerifier::kDistThreshold && delta <= 1 + PACVerifier::kDistThreshold);
-    return delta;
-}
-
 void DimUCCPACVerifier::PreparePACTypeData() {
     std::vector<model::Type const*> types(column_indices_.size());
     auto const& col_data = TypedRelation().GetColumnData();
