@@ -169,7 +169,6 @@ INSTANTIATE_TEST_SUITE_P(
                 MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
-// TODO(p-senichenkov): wonder if these won't fail
 INSTANTIATE_TEST_SUITE_P(
         Validation, TestUCCPACVerifier,
         testing::ValuesIn({

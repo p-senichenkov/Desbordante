@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/dim_ucc_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
@@ -9,7 +10,7 @@ namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
 private:
     // Histogram bucket count is delta_steps * kHistogramBucketCountMultiplier
-    constexpr static unsigned kHistogramBucketCountMultiplier = 100;
+    constexpr static unsigned kHistogramBucketCountMultiplier = 1;
 
     utils::Histogram histogram_;
     // TODO: Don't think it's so necessary
@@ -19,13 +20,16 @@ private:
 
     std::size_t total_pairs_;
 
+    mutable std::optional<utils::Ecdf> cached_ecdf_;
+
     // Lower bound is always 0
     // Maybe we could optimize things a little without this assumption, but I'm not sure
     double GetHistogramUpperBound() const;
     // Error is no more than 2x
     double GetHistogramUpperBoundApprox() const;
     void BuildHistogram();
-    std::vector<EpsilonDelta> CalculateEmpiricalProbabilities() const;
+
+    std::vector<EpsilonDelta> CalculateEmpiricalProbabilities();
 
     double GetNumPairs(double delta) const;
     double GetDelta(std::size_t num_pairs) const;

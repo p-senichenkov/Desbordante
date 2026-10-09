@@ -1,6 +1,7 @@
 #include "histogram_ucc_pac_verifier.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <string>
@@ -57,8 +58,7 @@ void HistogramUCCPACVerifier::BuildHistogram() {
     zero_dist_pairs_ += tuples_->size();
 }
 
-std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiricalProbabilities()
-        const {
+std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiricalProbabilities() {
     std::vector<EpsilonDelta> result;
     auto buckets = histogram_.Buckets();
 
@@ -67,20 +67,34 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
         result.emplace_back(0, zero_dist_delta);
     }
 
+    std::vector<std::size_t> ecdf;
+    std::vector<double> bucket_upper_bounds;
+    ecdf.reserve(buckets.size());
+    bucket_upper_bounds.reserve(buckets.size());
     std::size_t running_total = 0;
     for (auto const& bucket : buckets) {
         running_total += bucket.elem_count;
+        ecdf.push_back(running_total);
+        bucket_upper_bounds.push_back(bucket.upper_bound);
+
         auto delta = GetDelta(running_total);
         if (delta >= MaxDelta()) {
             break;
         }
-        auto epsilon = bucket.max_bound;
+        auto epsilon = bucket.upper_bound;
         result.emplace_back(epsilon, delta);
     }
+    if (bucket_upper_bounds.empty()) {
+        cached_ecdf_ = utils::Ecdf{{}, {running_total}};
+    } else {
+        // Make last bucket open
+        bucket_upper_bounds.erase(std::prev(bucket_upper_bounds.end()));
+        cached_ecdf_ = utils::Ecdf{bucket_upper_bounds, std::move(ecdf)};
+    }
+
     // Ensure that (??, max delta) is always in empirical_probabilities
     if (MaxDelta() > 1 - kDistThreshold) {
         // TODO: Seems strange
-        // TODO: Also it can produce very erroneous result -- up to 2x of real epsilon
         result.emplace_back(real_max_distance_, 1);
     }
     return result;
@@ -91,7 +105,6 @@ double HistogramUCCPACVerifier::GetDelta(std::size_t num_pairs) const {
     assert(num_pairs <= total_pairs_);
 
     double delta = static_cast<double>(num_pairs) / total_pairs_;
-    LOG_DEBUG("Delta = {} for {} pairs", delta, num_pairs);
     assert(delta >= -PACVerifier::kDistThreshold && delta <= 1 + PACVerifier::kDistThreshold);
     return delta;
 }
@@ -102,14 +115,25 @@ double HistogramUCCPACVerifier::GetNumPairs(double delta) const {
 }
 
 PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const {
-    auto [elem_count, upper_bound] = histogram_.GetElemCount(epsilon);
-    return {upper_bound, GetDelta(elem_count)};
+    // TODO: Is there a place where GetEps... is called before CalcualteEmpiricalProbabilities?
+    // I'm sure there isn't
+    // TODO: DOUBLE CHECK!!!
+    assert(cached_ecdf_);
+
+    auto [elem_count, upper_bound] = cached_ecdf_->Get(epsilon);
+    // A little refinement: if bucket is empty, we can take arbitrary epsilon
+    if (histogram_.Get(epsilon).first > 0) {
+        epsilon = upper_bound;
+    }
+    return {epsilon, GetDelta(elem_count)};
 }
 
 void HistogramUCCPACVerifier::ExecuteInternal() {
     LogCommonOptions();
 
     BuildHistogram();
+    LOG_DEBUG("Histogram: {}", histogram_.ToString());
+    histogram_.Dump("histogram.txt");
 
     auto emp_probabilities = CalculateEmpiricalProbabilities();
     auto [epsilon, delta] = FindEpsilonDelta(std::move(emp_probabilities));

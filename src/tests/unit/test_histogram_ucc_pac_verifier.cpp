@@ -15,7 +15,6 @@
 
 #include "core/algorithms/algo_factory.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram_ucc_pac_verifier.h"
-#include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
 #include "core/config/exceptions.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
@@ -133,7 +132,7 @@ INSTANTIATE_TEST_SUITE_P(
                 // TODO(p-senchenkov): Something more?
         }));
 
-UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
+UCCPACVerifyingParams MetricCoordsBoundsParams(EpsilonDelta const& eps_delta,
                                                std::optional<double> max_delta = std::nullopt,
                                                std::optional<double> min_eps = std::nullopt,
                                                std::optional<double> max_eps = std::nullopt) {
@@ -147,36 +146,35 @@ INSTANTIATE_TEST_SUITE_P(
         ParametrizedRefinement, TestHistogramUCCPACVerifier,
         testing::ValuesIn({
                 // Both min epsilon and max epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
                 // Only max epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
                 // Only min epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[5], 1, 175),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[5], 1, 175),
                 // NOTE: algorithm is allowed to select passed min bound
-                MetricMoviesBoundsParams({125, 0.775}, 1, 125),
+                MetricCoordsBoundsParams({125, 0.775}, 1, 125),
                 // Only max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.57),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.57),
                 // Min epsilon and max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
                 // Max epsilon and max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
                 // All bounds
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
-// TODO(p-senichenkov): wonder if these won't fail
 INSTANTIATE_TEST_SUITE_P(
         Validation, TestHistogramUCCPACVerifier,
         testing::ValuesIn({
                 // Find epsilon by delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2],
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2],
                                          // TODO(psenichenkov@): maybe add two separate functions,
                                          // and do not complicate things?
                                          kMetricCoordsKnees[2].delta + 0.02,
                                          std::numeric_limits<double>::infinity(),
                                          std::numeric_limits<double>::infinity()),
                 // Find delta by epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
         }));
 
 TEST(UCCPACVerifierTests, DefaultMetricFails) {
@@ -185,53 +183,8 @@ TEST(UCCPACVerifierTests, DefaultMetricFails) {
             {kCsvConfig, kMixedWithNulls},
             {kColumnIndices, config::IndicesType{0}},
     };
-    auto verifier = algos::CreateAndLoadAlgorithm<algos::pac_verifier::UCCPACVerifier>(params);
+    auto verifier =
+            algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
     EXPECT_THROW(verifier->Execute(), config::ConfigurationError);
 }
-
-using IndexPairs = std::vector<std::pair<std::size_t, std::size_t>>;
-
-struct UCCPACHighlightParams {
-    algos::StdParamsMap params;
-    double eps_1;
-    double eps_2;
-    IndexPairs expected_highlight;
-
-    UCCPACHighlightParams(CSVConfig const& csv_config, config::IndicesType&& column_indices,
-                          IndexPairs&& expected_highlight, double eps_1 = 0, double eps_2 = -1)
-        : params({
-                  {kCsvConfig, csv_config},
-                  {kColumnIndices, column_indices},
-          }),
-          eps_1(eps_1),
-          eps_2(eps_2),
-          expected_highlight(std::move(expected_highlight)) {}
-};
-
-class TestUCCPACHighlight : public testing::TestWithParam<UCCPACHighlightParams> {};
-
-TEST_P(TestUCCPACHighlight, DefaultTest) {
-    auto const& p = GetParam();
-    auto verifier = algos::CreateAndLoadAlgorithm<algos::pac_verifier::UCCPACVerifier>(p.params);
-    verifier->Execute();
-
-    auto highlight = verifier->GetHighlights(p.eps_1, p.eps_2);
-    auto highlight_indices = highlight.RowIndices();
-    EXPECT_THAT(highlight_indices, testing::UnorderedElementsAreArray(p.expected_highlight));
-}
-
-INSTANTIATE_TEST_SUITE_P(
-        UCCPACHighlightTests, TestUCCPACHighlight,
-        testing::ValuesIn({
-                UCCPACHighlightParams(kMetricMovies, {2},
-                                      {
-                                              // NOTE: Highlights are (xx, xx]
-                                              {2, 3},  {2, 4},  {2, 5},   {3, 2},   {3, 6}, {3, 8},
-                                              {4, 2},  {4, 8},  {4, 10},  {5, 2},   {5, 9}, {6, 3},
-                                              {6, 9},  {7, 10}, {8, 3},   {8, 4},   {9, 5}, {9, 6},
-                                              {10, 4}, {10, 7}, {10, 11}, {11, 10},
-                                      },
-                                      5, 10),
-        }));
-// TODO: moar highlight tests!
 }  // namespace tests
