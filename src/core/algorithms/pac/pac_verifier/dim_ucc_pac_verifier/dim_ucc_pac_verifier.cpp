@@ -16,6 +16,8 @@ void DimUCCPACVerifier::PreparePACTypeData() {
     std::ranges::transform(column_indices_, types.begin(),
                            [&col_data](std::size_t const idx) { return &col_data[idx].GetType(); });
 
+    metric_ = metric_option_->SetTypes(types);
+
     tuple_type_ = std::make_shared<pac::model::TupleType>(std::move(types));
 
     tuples_ = pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
@@ -31,7 +33,7 @@ DimUCCPACVerifier::DimUCCPACVerifier() {
 
     RegisterOption(IndicesOption{kColumnIndices, kDColumnIndices, nullptr}(
             &column_indices_, [this]() { return input_table_->GetNumberOfColumns(); }));
-    RegisterOption(VectorMetricOption(&metric_));
+    RegisterOption(VectorMetricOption(&metric_option_));
 
     MakeOptionsAvailable({kTableOpt.GetName(), kCustomMetric});
 }

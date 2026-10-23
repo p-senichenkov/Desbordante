@@ -18,7 +18,7 @@ double HistogramUCCPACVerifier::GetHistogramUpperBound() const {
     double max_dist = 0;
     for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
         for (std::size_t j = i + 1; j < tuples_->size(); ++j) {
-            auto dist = metric_->Dist(tuple_type_->GetTypes(), (*tuples_)[i], (*tuples_)[j]);
+            auto dist = (*metric_)((*tuples_)[i], (*tuples_)[j]);
             max_dist = std::max(max_dist, dist);
         }
     }
@@ -31,7 +31,7 @@ double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
     double max_dist_single_dim = 0;
     auto const& first = tuples_->front();
     for (auto it = std::next(tuples_->begin()); it != tuples_->end(); ++it) {
-        auto dist = metric_->Dist(tuple_type_->GetTypes(), first, *it);
+        auto dist = (*metric_)(first, *it);
         max_dist_single_dim = std::max(max_dist_single_dim, dist);
     }
     return max_dist_single_dim * 2;
@@ -44,7 +44,7 @@ void HistogramUCCPACVerifier::BuildHistogram() {
     real_max_distance_ = 0;
     for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
         for (std::size_t j = i + 1; j < tuples_->size(); ++j) {
-            auto dist = metric_->Dist(tuple_type_->GetTypes(), (*tuples_)[i], (*tuples_)[j]);
+            auto dist = (*metric_)((*tuples_)[i], (*tuples_)[j]);
             histogram_.Record(dist, 2);
             if (dist == 0) {
                 zero_dist_pairs_ += 2;

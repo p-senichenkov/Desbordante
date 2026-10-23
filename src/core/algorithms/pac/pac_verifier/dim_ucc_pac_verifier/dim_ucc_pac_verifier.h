@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "core/algorithms/pac/model/tuple_type.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/ucc_pac.h"
+#include "core/config/custom_metric/custom_vector_metric/type.h"
 #include "core/config/indices/type.h"
-#include "core/util/custom_metric/custom_vector_metric.h"
 
 namespace algos::pac_verifier {
 // UCC PAC verifier without highlights
@@ -12,7 +14,8 @@ namespace algos::pac_verifier {
 class DimUCCPACVerifier : public PACVerifier {
 protected:
     config::IndicesType column_indices_;
-    std::shared_ptr<util::ICustomVectorMetric> metric_;
+    config::CustomVectorMetricOptionType metric_option_;
+    config::CustomVectorMetricType metric_;
 
     std::shared_ptr<pac::model::TupleType> tuple_type_;
     std::shared_ptr<std::vector<pac::model::Tuple>> tuples_;
