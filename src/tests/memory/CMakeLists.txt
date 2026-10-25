@@ -11,4 +11,5 @@ target_link_libraries(
             ${DESBORDANTE_PREFIX}::testlib::common
             magic_enum::magic_enum
             spdlog::spdlog_header_only
+            Boost::headers
 )
