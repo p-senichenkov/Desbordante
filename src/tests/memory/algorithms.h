@@ -1,11 +1,15 @@
 #pragma once
 
-#include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_verifier.h"
-#include "core/algorithms/pac/pac_verifier/fd_pac_verifier/fd_pac_verifier.h"
-#include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
+#include <memory>
+
+#include "core/algorithms/pac/model/idomain.h"
+#include "core/config/indices/type.h"
+#include "core/parser/csv_parser/csv_parser.h"
 
 namespace memory {
-using DomainPACVerifier = algos::pac_verifier::DomainPACVerifier;
-using FDPACVerifier = algos::pac_verifier::FDPACVerifier;
-using UCCPACVerifier = algos::pac_verifier::UCCPACVerifier;
+void DomainPACVerifierMemory(CSVConfig const& input_table, config::IndicesType&& indices,
+                             std::shared_ptr<pac::model::IDomain> domain);
+void FDPACVerifierMemory(CSVConfig const& input_table, config::IndicesType&& lhs_indices,
+                         config::IndicesType&& rhs_indices);
+void UCCPACVerifierMemory(CSVConfig const& input_table, config::IndicesType&& indices);
 }  // namespace memory

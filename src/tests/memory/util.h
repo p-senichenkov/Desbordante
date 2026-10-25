@@ -1,34 +1,24 @@
-#include <format>
+#pragma once
+
 #include <fstream>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <string>
 
 #include "core/algorithms/algo_factory.h"
 
+namespace memory {
+namespace detail {
 struct PeakMemoryUsage {
     unsigned long vspace_kb = 0;
     unsigned long rss_kb = 0;
 };
 
-template <>
-struct std::formatter<PeakMemoryUsage, char> {
-    template <typename ParseContext>
-    constexpr ParseContext::iterator parse(ParseContext& ctx) {
-        auto it = ctx.begin();
-        if (it != ctx.end() && *it != '}') {
-            throw std::format_error("Invalid format args for PeakMemoryUsage");
-        }
-        return it;
-    }
-
-    template <typename FmtContext>
-    FmtContext::iterator format(PeakMemoryUsage mem_usage, FmtContext& ctx) const {
-        auto str = std::format("{{\"vspace_kb\": {}, \"rss_kb\": {}}}", mem_usage.vspace_kb,
-                               mem_usage.rss_kb);
-        return std::ranges::copy(std::move(str), ctx.out()).out;
-    }
-};
+inline std::ostream& operator<<(std::ostream& os, PeakMemoryUsage const& mem_usage) {
+    os << "{\"vspace_kb\": " << mem_usage.vspace_kb << ", \"rss_kb\": " << mem_usage.rss_kb << "}";
+    return os;
+}
 
 inline PeakMemoryUsage FetchMemoryUsage() {
     std::ifstream ifs{"/proc/self/status"};
@@ -51,15 +41,17 @@ inline PeakMemoryUsage FetchMemoryUsage() {
     }
     return result;
 }
+}  // namespace detail
 
 template <typename Algo>
 void MeasuredRun(algos::StdParamsMap const& params) {
-    auto before = FetchMemoryUsage();
+    auto before = detail::FetchMemoryUsage();
     auto algo = algos::CreateAndLoadAlgorithm<Algo>(params);
-    auto after_load_data = FetchMemoryUsage();
+    auto after_load_data = detail::FetchMemoryUsage();
     algo->Execute();
-    auto after_execute = FetchMemoryUsage();
+    auto after_execute = detail::FetchMemoryUsage();
 
-    std::cout << std::format("{{\"before\": {}, \"after_load\": {}, \"after_execute\": {}}}",
-                             before, after_load_data, after_execute);
+    std::cout << "{\"before\": " << before << ", \"after_load\": " << after_load_data
+              << ", \"after_execute\": " << after_execute << "}\n";
 }
+}  // namespace memory
