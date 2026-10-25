@@ -20,7 +20,6 @@
 #include "core/util/custom_metric/custom_vector_metric.h"
 #include "gtest/gtest.h"
 #include "tests/common/all_csv_configs.h"
-#include "tests/common/csv_config_util.h"
 
 namespace {
 template <typename T>
@@ -140,14 +139,6 @@ UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
             std::move(max_eps)};
 }
 
-UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
-                                               std::optional<double> max_delta = std::nullopt,
-                                               std::optional<double> min_eps = std::nullopt,
-                                               std::optional<double> max_eps = std::nullopt) {
-    return MetricMoviesBoundsParams(eps_delta.epsilon, eps_delta.delta, std::move(max_delta),
-                                    std::move(min_eps), std::move(max_eps));
-}
-
 INSTANTIATE_TEST_SUITE_P(
         ParametrizedRefinement, TestUCCPACVerifier,
         testing::ValuesIn({
@@ -169,6 +160,7 @@ INSTANTIATE_TEST_SUITE_P(
                 MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
+// TODO(p-senichenkov): wonder if these won't fail
 INSTANTIATE_TEST_SUITE_P(
         Validation, TestUCCPACVerifier,
         testing::ValuesIn({

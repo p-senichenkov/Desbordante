@@ -9,8 +9,8 @@
 namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
 private:
-    // Histogram bucket count is delta_steps * kHistogramBucketCountMultiplier
-    constexpr static unsigned kHistogramBucketCountMultiplier = 1;
+    // Histogram bucket count is delta_steps * histogram_bucket_count_multiplier_
+    unsigned histogram_bucket_count_multiplier_;
 
     utils::Histogram histogram_;
     // TODO: Don't think it's so necessary
@@ -47,5 +47,8 @@ private:
         DimUCCPACVerifier::PreparePACTypeData();
         total_pairs_ = tuples_->size() * tuples_->size();
     }
+
+public:
+    HistogramUCCPACVerifier();
 };
 }  // namespace algos::pac_verifier

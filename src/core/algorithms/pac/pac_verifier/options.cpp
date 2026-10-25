@@ -9,6 +9,7 @@
 #include "core/config/exceptions.h"
 #include "core/config/names.h"
 #include "core/config/option.h"
+#include "core/util/logger.h"
 
 using namespace config;
 using namespace config::names;
@@ -74,6 +75,7 @@ Option<unsigned long>::DefaultFunc CalculateDefaultDeltaSteps(GetDouble&& get_mi
                                                               GetDouble&& get_max_delta) {
     return [get_min_delta = std::move(get_min_delta),
             get_max_delta = std::move(get_max_delta)]() mutable {
+        LOG_INFO("Calculating default delta steps...");
         return std::round((get_max_delta() - get_min_delta()) * 1000);
     };
 }

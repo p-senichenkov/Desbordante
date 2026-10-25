@@ -1,8 +1,5 @@
-// Copy of UCC PAC verifier tests
-
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <cstdlib>
 #include <limits>
 #include <memory>
@@ -132,7 +129,7 @@ INSTANTIATE_TEST_SUITE_P(
                 // TODO(p-senchenkov): Something more?
         }));
 
-UCCPACVerifyingParams MetricCoordsBoundsParams(EpsilonDelta const& eps_delta,
+UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
                                                std::optional<double> max_delta = std::nullopt,
                                                std::optional<double> min_eps = std::nullopt,
                                                std::optional<double> max_eps = std::nullopt) {
@@ -146,45 +143,46 @@ INSTANTIATE_TEST_SUITE_P(
         ParametrizedRefinement, TestHistogramUCCPACVerifier,
         testing::ValuesIn({
                 // Both min epsilon and max epsilon
-                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
                 // Only max epsilon
-                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
                 // Only min epsilon
-                MetricCoordsBoundsParams(kMetricCoordsKnees[5], 1, 175),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[5], 1, 175),
                 // NOTE: algorithm is allowed to select passed min bound
-                MetricCoordsBoundsParams({125, 0.775}, 1, 125),
+                MetricMoviesBoundsParams({125, 0.775}, 1, 125),
                 // Only max delta
-                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.57),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.57),
                 // Min epsilon and max delta
-                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
                 // Max epsilon and max delta
-                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
                 // All bounds
-                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
+// TODO(p-senichenkov): wonder if these won't fail
 INSTANTIATE_TEST_SUITE_P(
         Validation, TestHistogramUCCPACVerifier,
         testing::ValuesIn({
                 // Find epsilon by delta
-                MetricCoordsBoundsParams(kMetricCoordsKnees[2],
+                MetricMoviesBoundsParams(kMetricCoordsKnees[2],
                                          // TODO(psenichenkov@): maybe add two separate functions,
                                          // and do not complicate things?
                                          kMetricCoordsKnees[2].delta + 0.02,
                                          std::numeric_limits<double>::infinity(),
                                          std::numeric_limits<double>::infinity()),
                 // Find delta by epsilon
-                MetricCoordsBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
+                MetricMoviesBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
         }));
 
-TEST(UCCPACVerifierTests, DefaultMetricFails) {
+TEST(HistogramUCCPACVerifierTests, DefaultMetricFails) {
     // Check that an attempt to use default metric on non-metrizable column results in clear error
     algos::StdParamsMap params{
             {kCsvConfig, kMixedWithNulls},
             {kColumnIndices, config::IndicesType{0}},
     };
-    auto verifier =
-            algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
-    EXPECT_THROW(verifier->Execute(), config::ConfigurationError);
+    EXPECT_THROW(
+            algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params),
+            config::ConfigurationError);
 }
 }  // namespace tests

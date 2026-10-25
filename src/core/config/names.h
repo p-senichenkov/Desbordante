@@ -129,6 +129,7 @@ constexpr auto kMaxDelta = "max_delta";
 constexpr auto kMinDelta = "min_delta";
 constexpr auto kMaxEpsilon = "max_epsilon";
 constexpr auto kMinEpsilon = "min_epsilon";
+constexpr auto kHistogramMultiplier = "histogram_multiplier";
 // Pyro
 constexpr auto kCustomRandom = "custom_random_seed";
 // Spider

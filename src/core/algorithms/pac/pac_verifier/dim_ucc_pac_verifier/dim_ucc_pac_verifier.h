@@ -7,14 +7,23 @@
 #include "core/algorithms/pac/ucc_pac.h"
 #include "core/config/custom_metric/custom_vector_metric/type.h"
 #include "core/config/indices/type.h"
+#include "core/config/names.h"
 
 namespace algos::pac_verifier {
 // UCC PAC verifier without highlights
 // Provides some base for optimizations
 class DimUCCPACVerifier : public PACVerifier {
+private:
+    void MakeExecuteOptsAvailable() override {
+        using namespace config::names;
+
+        MakeOptionsAvailable({kMinEpsilon, kDiagonalThreshold});
+    }
+
 protected:
     config::IndicesType column_indices_;
     config::CustomVectorMetricOptionType metric_option_;
+    config::CustomVectorMetricOptionType metric_opt_;
     config::CustomVectorMetricType metric_;
 
     std::shared_ptr<pac::model::TupleType> tuple_type_;

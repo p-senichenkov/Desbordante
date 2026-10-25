@@ -203,6 +203,7 @@ constexpr auto kDMaxDelta =
 constexpr auto kDMinDelta =
         "Minimal value of delta, which is a probability at which values satisfy the dependency "
         "(default is 0 if min_eps or max_eps is passed, 0.9 otherwise).";
+constexpr auto kDHistogramMultiplier = "Histgoram bucket count multiplier.";
 // Pyro
 constexpr auto kDCustomRandom =
         "seed for the custom random generator. Used for consistency of results across platforms.";

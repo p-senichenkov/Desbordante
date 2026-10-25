@@ -9,6 +9,10 @@
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/config/column_index/type.h"
+#include "core/config/descriptions.h"
+#include "core/config/names.h"
+#include "core/config/option.h"
+#include "core/config/option_using.h"
 #include "core/util/logger.h"
 
 using namespace algos::pac_verifier;
@@ -38,7 +42,10 @@ double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
 }
 
 void HistogramUCCPACVerifier::BuildHistogram() {
-    histogram_ = utils::Histogram{DeltaSteps() * kHistogramBucketCountMultiplier, 0,
+    LOG_INFO("Creating histogram with {} * {} = {} buckets...", delta_steps_,
+             histogram_bucket_count_multiplier_,
+             static_cast<std::size_t>(delta_steps_) * histogram_bucket_count_multiplier_);
+    histogram_ = utils::Histogram{delta_steps_ * histogram_bucket_count_multiplier_, 0,
                                   GetHistogramUpperBound()};
 
     real_max_distance_ = 0;
@@ -63,7 +70,7 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
     auto buckets = histogram_.Buckets();
 
     auto zero_dist_delta = GetDelta(zero_dist_pairs_);
-    if (zero_dist_delta > MinDelta()) {
+    if (zero_dist_delta > min_delta_) {
         result.emplace_back(0, zero_dist_delta);
     }
 
@@ -78,7 +85,7 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
         bucket_upper_bounds.push_back(bucket.upper_bound);
 
         auto delta = GetDelta(running_total);
-        if (delta >= MaxDelta()) {
+        if (delta >= max_delta_) {
             break;
         }
         auto epsilon = bucket.upper_bound;
@@ -93,7 +100,7 @@ std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiric
     }
 
     // Ensure that (??, max delta) is always in empirical_probabilities
-    if (MaxDelta() > 1 - kDistThreshold) {
+    if (max_delta_ > 1 - kDistThreshold) {
         // TODO: Seems strange
         result.emplace_back(real_max_distance_, 1);
     }
@@ -131,6 +138,10 @@ PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(dou
 void HistogramUCCPACVerifier::ExecuteInternal() {
     LogCommonOptions();
 
+    // TODO: Since we build histogram in "execute-time", we can save a pass when max_epsilon is
+    // given (but this requires a thorough review of PAC-Man).
+    // Otherwise, we can move delta_steps to "configuration" and build a histogram in
+    // "configure-time"
     BuildHistogram();
     LOG_DEBUG("Histogram: {}", histogram_.ToString());
     histogram_.Dump("histogram.txt");
@@ -146,4 +157,12 @@ void HistogramUCCPACVerifier::ExecuteInternal() {
             [&columns](config::IndexType idx) -> std::string { return columns[idx]->GetName(); });
     auto column_indices = column_indices_;
     pac_ = model::UCCPAC(std::move(column_indices), std::move(column_names), epsilon, delta);
+}
+
+HistogramUCCPACVerifier::HistogramUCCPACVerifier() {
+    DESBORDANTE_OPTION_USING;
+
+    RegisterOption(Option{&histogram_bucket_count_multiplier_, kHistogramMultiplier,
+                          kDHistogramMultiplier, 1u});
+    MakeOptionsAvailable({kHistogramMultiplier});
 }
