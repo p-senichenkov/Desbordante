@@ -5,6 +5,7 @@
 
 #include "core/algorithms/algo_factory.h"
 #include "core/algorithms/pac/model/idomain.h"
+#include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram_ucc_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/fd_pac_verifier/fd_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
@@ -34,6 +35,10 @@ void FDPACVerifierMemory(CSVConfig const& input_table, config::IndicesType&& lhs
 
 void UCCPACVerifierMemory(CSVConfig const& input_table, config::IndicesType&& indices) {
     algos::StdParamsMap options{{kCsvConfig, input_table}, {kColumnIndices, std::move(indices)}};
+#if 0
     MeasuredRun<algos::pac_verifier::UCCPACVerifier>(options);
+#else
+    MeasuredRun<algos::pac_verifier::HistogramUCCPACVerifier>(options);
+#endif
 }
 }  // namespace memory
