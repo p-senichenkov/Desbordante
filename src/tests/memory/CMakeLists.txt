@@ -7,6 +7,7 @@ target_link_libraries(
     PRIVATE ${DESBORDANTE_PREFIX}::pac::verifier::domain_pac_verifier
             ${DESBORDANTE_PREFIX}::pac::verifier::fd_pac_verifier
             ${DESBORDANTE_PREFIX}::pac::verifier::ucc_pac_verifier
+            ${DESBORDANTE_PREFIX}::pac::verifier::dim_ucc_pac_verifier
             ${DESBORDANTE_PREFIX}.compile_feats
             ${DESBORDANTE_PREFIX}::testlib::common
             magic_enum::magic_enum
