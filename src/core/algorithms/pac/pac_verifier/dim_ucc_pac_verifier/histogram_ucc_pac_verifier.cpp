@@ -42,11 +42,13 @@ double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
 }
 
 void HistogramUCCPACVerifier::BuildHistogram() {
-    LOG_INFO("Creating histogram with {} * {} = {} buckets...", delta_steps_,
-             histogram_bucket_count_multiplier_,
-             static_cast<std::size_t>(delta_steps_) * histogram_bucket_count_multiplier_);
-    histogram_ = utils::Histogram{delta_steps_ * histogram_bucket_count_multiplier_, 0,
-                                  GetHistogramUpperBound()};
+    if (max_epsilon_ > 0) {
+        histogram_ = utils::Histogram(delta_steps_ * histogram_bucket_count_multiplier_,
+                                      min_epsilon_, max_epsilon_);
+    } else {
+        histogram_ = utils::Histogram{delta_steps_ * histogram_bucket_count_multiplier_,
+                                      min_epsilon_, GetHistogramUpperBound()};
+    }
 
     real_max_distance_ = 0;
     for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
@@ -122,9 +124,7 @@ double HistogramUCCPACVerifier::GetNumPairs(double delta) const {
 }
 
 PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const {
-    // TODO: Is there a place where GetEps... is called before CalcualteEmpiricalProbabilities?
-    // I'm sure there isn't
-    // TODO: DOUBLE CHECK!!!
+    // It's guaranteed that GetEpsilonDeltaForEpsilon is always called after ExecuteInternal()
     assert(cached_ecdf_);
 
     auto [elem_count, upper_bound] = cached_ecdf_->Get(epsilon);
