@@ -72,9 +72,4 @@ endif()
 # Configure boost
 set(Boost_USE_STATIC_LIBS OFF)
 
-set(boost_libraries container thread graph)
-if(DESBORDANTE_BUILD_BENCHMARKS)
-    list(APPEND boost_libraries program_options)
-endif()
-
-find_package(Boost 1.85.0 REQUIRED COMPONENTS ${boost_libraries})
+find_package(Boost 1.85.0 REQUIRED COMPONENTS container thread graph program_options)

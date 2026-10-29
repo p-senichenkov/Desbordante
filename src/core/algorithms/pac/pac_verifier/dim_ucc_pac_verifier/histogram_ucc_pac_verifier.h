@@ -13,6 +13,8 @@ private:
     // Histogram bucket count is delta_steps * histogram_bucket_count_multiplier_
     unsigned histogram_bucket_count_multiplier_;
 
+    unsigned histogram_bucket_count_mulitplier_;
+
     utils::Histogram histogram_;
     // TODO: Don't think it's so necessary
     std::size_t zero_dist_pairs_ = 0;
