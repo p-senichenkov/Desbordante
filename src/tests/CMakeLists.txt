@@ -6,3 +6,5 @@ endif()
 if(DESBORDANTE_BUILD_BENCHMARKS)
     add_subdirectory(benchmark)
 endif()
+
+add_subdirectory(accuracy)

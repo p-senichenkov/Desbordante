@@ -5,12 +5,17 @@
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/dim_ucc_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
+#include "core/config/descriptions.h"
+#include "core/config/names.h"
+#include "core/config/option_using.h"
 
 namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
 private:
     // Histogram bucket count is delta_steps * histogram_bucket_count_multiplier_
     unsigned histogram_bucket_count_multiplier_;
+
+    unsigned histogram_bucket_count_mulitplier_;
 
     utils::Histogram histogram_;
     // TODO: Don't think it's so necessary
