@@ -5,6 +5,7 @@
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/dim_ucc_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
+#include "core/algorithms/pac/ucc_pac.h"
 
 namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
@@ -45,10 +46,14 @@ private:
 
     void PreparePACTypeData() override {
         DimUCCPACVerifier::PreparePACTypeData();
-        total_pairs_ = tuples_->size() * tuples_->size();
+        total_pairs_ = tuples_.size() * tuples_.size();
     }
+
+    model::UCCPAC MakePAC(double epsilon, double delta) const;
 
 public:
     HistogramUCCPACVerifier();
+    model::UCCPAC const& FindEpsilon(double delta) override;
+    model::UCCPAC const& FindDelta(double epsilon) override;
 };
 }  // namespace algos::pac_verifier

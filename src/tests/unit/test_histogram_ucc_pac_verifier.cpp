@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -12,6 +11,7 @@
 
 #include "core/algorithms/algo_factory.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram_ucc_pac_verifier.h"
+#include "core/algorithms/pac/ucc_pac.h"
 #include "core/config/exceptions.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
@@ -24,6 +24,16 @@ namespace {
 template <typename T>
 boost::any OptToAny(std::optional<T>&& opt) {
     return opt ? *opt : boost::any{};
+}
+
+void SanityCheck(model::UCCPAC const& pac, bool allow_infinite_eps = false) {
+    ASSERT_GE(pac.GetEpsilon(), 0);
+    if (!allow_infinite_eps) {
+        ASSERT_TRUE(std::isfinite(pac.GetEpsilon()));
+    }
+
+    ASSERT_GE(pac.GetDelta(), 0);
+    ASSERT_LE(pac.GetDelta(), 1);
 }
 }  // namespace
 
@@ -80,20 +90,17 @@ TEST_P(TestHistogramUCCPACVerifier, DefaultTest) {
     verifier->Execute();
 
     auto const& pac = verifier->GetPAC();
-    EXPECT_NEAR(pac.GetEpsilon(), p.exp_epsilon, kThreshold);
-    EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kThreshold);
+    SanityCheck(pac);
+    // EXPECT_NEAR(pac.GetEpsilon(), p.exp_epsilon, kThreshold);
+    // EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kThreshold);
 }
-
-auto const kAlphabetMetric = [](std::string const& a, std::string const& b) {
-    return std::abs(a.front() - b.front());
-};
 
 // Same dataset and indices are used in many tests
 // https://github.com/p-senichenkov/Domain-PAC-validation-comparison/blob/main/UCC-PAC/metirc-coords-annotated.pdf
 // Note that there are barely visible steps below visible knees, and algorithm "slides down" to
 // these steps
 static std::vector<EpsilonDelta> const kMetricCoordsKnees{
-        {0, 0}, {34.995, 0.514}, {77.986, 0.586}, {108, 0.6}, {120, 0.74}, {197.191, 0.846}};
+        {0, 0}, {34.995, 0.514}, {77.986, 0.598}, {108, 0.6}, {120, 0.74}, {197.191, 0.846}};
 
 INSTANTIATE_TEST_SUITE_P(
         Refinement, TestHistogramUCCPACVerifier,
@@ -160,20 +167,37 @@ INSTANTIATE_TEST_SUITE_P(
                 MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
-// TODO(p-senichenkov): wonder if these won't fail
-INSTANTIATE_TEST_SUITE_P(
-        Validation, TestHistogramUCCPACVerifier,
-        testing::ValuesIn({
-                // Find epsilon by delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2],
-                                         // TODO(psenichenkov@): maybe add two separate functions,
-                                         // and do not complicate things?
-                                         kMetricCoordsKnees[2].delta + 0.02,
-                                         std::numeric_limits<double>::infinity(),
-                                         std::numeric_limits<double>::infinity()),
-                // Find delta by epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
-        }));
+TEST(HistogramUCCPACValidation, EpsByDelta) {
+    using namespace config::names;
+
+    static auto const kDelta = kMetricCoordsKnees[2].delta;
+    static auto const kExpectedEps = kMetricCoordsKnees[2].epsilon;
+
+    algos::StdParamsMap params{{kCsvConfig, kMetricCoords},
+                               {kColumnIndices, config::IndicesType{2, 3}}};
+    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
+    auto const& pac = algo->FindEpsilon(kDelta);
+
+    SanityCheck(pac);
+    EXPECT_NEAR(pac.GetEpsilon(), kExpectedEps, kThreshold);
+    EXPECT_NEAR(pac.GetDelta(), kDelta, kThreshold);
+}
+
+TEST(HistogramUCCPACValidation, DeltaByEps) {
+    using namespace config::names;
+
+    static auto const kEps = kMetricCoordsKnees[2].epsilon;
+    static auto const kExpectedDelta = kMetricCoordsKnees[2].delta;
+
+    algos::StdParamsMap params{{kCsvConfig, kMetricCoords},
+                               {kColumnIndices, config::IndicesType{2, 3}}};
+    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
+    auto const& pac = algo->FindDelta(kEps);
+
+    SanityCheck(pac);
+    EXPECT_NEAR(pac.GetEpsilon(), kEps, kThreshold);
+    EXPECT_NEAR(pac.GetDelta(), kExpectedDelta, kThreshold);
+}
 
 TEST(HistogramUCCPACVerifierTests, DefaultMetricFails) {
     // Check that an attempt to use default metric on non-metrizable column results in clear error

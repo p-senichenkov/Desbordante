@@ -20,6 +20,12 @@ struct Bucket {
     std::size_t elem_count;
 };
 
+struct DetailedBucket {
+    double lower_bound;
+    double upper_bound;
+    std::size_t elem_count;
+};
+
 class BucketStorage {
 private:
     constexpr static auto kInfinity = std::numeric_limits<double>::infinity();
@@ -85,12 +91,12 @@ public:
         return bucket_idx;
     }
 
-    // @return number of elements in bucket, bucket's upper bound
-    std::pair<std::size_t, double> Get(double val) const {
+    DetailedBucket Get(double val) const {
         auto const bucket_idx = FindBucket(val);
         double upper_bound =
                 bucket_idx < bucket_bounds_.size() ? bucket_bounds_[bucket_idx] : kInfinity;
-        return {buckets_[bucket_idx], upper_bound};
+        double lower_bound = bucket_idx > 0 ? bucket_bounds_[bucket_idx - 1] : -kInfinity;
+        return DetailedBucket{lower_bound, upper_bound, buckets_[bucket_idx]};
     }
 
     void Add(double val, std::size_t elem_count) {
@@ -135,8 +141,7 @@ public:
         storage_.Add(val, count);
     }
 
-    // @return number of elements in bucket, bucket's upper bound
-    std::pair<std::size_t, double> Get(double val) const {
+    detail::DetailedBucket Get(double val) const {
         return storage_.Get(val);
     }
 
@@ -169,8 +174,7 @@ public:
     Ecdf(std::vector<double> bucket_bounds, std::vector<std::size_t>&& elem_counts)
         : storage_(std::move(bucket_bounds), std::move(elem_counts)) {}
 
-    // @return number of elements in bucket, bucket's upper bound
-    std::pair<std::size_t, double> Get(double val) const {
+    detail::DetailedBucket Get(double val) const {
         return storage_.Get(val);
     }
 };

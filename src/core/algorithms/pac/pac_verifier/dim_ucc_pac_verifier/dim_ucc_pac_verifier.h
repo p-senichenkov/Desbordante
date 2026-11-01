@@ -1,8 +1,6 @@
 #pragma once
 
-#include <memory>
-
-#include "core/algorithms/pac/model/tuple_type.h"
+#include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
 #include "core/algorithms/pac/ucc_pac.h"
 #include "core/config/custom_metric/custom_vector_metric/type.h"
@@ -26,8 +24,7 @@ protected:
     config::CustomVectorMetricOptionType metric_opt_;
     config::CustomVectorMetricType metric_;
 
-    std::shared_ptr<pac::model::TupleType> tuple_type_;
-    std::shared_ptr<std::vector<pac::model::Tuple>> tuples_;
+    std::vector<pac::model::Tuple> tuples_;
 
     std::optional<model::UCCPAC> pac_;
 
@@ -46,5 +43,8 @@ public:
         }
         return *pac_;
     }
+
+    virtual model::UCCPAC const& FindEpsilon(double delta) = 0;
+    virtual model::UCCPAC const& FindDelta(double epsilon) = 0;
 };
 }  // namespace algos::pac_verifier

@@ -2,12 +2,16 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
 #include "core/algorithms/pac/pac_verifier/pac_verifier.h"
+#include "core/algorithms/pac/ucc_pac.h"
 #include "core/config/column_index/type.h"
 #include "core/config/descriptions.h"
 #include "core/config/names.h"
@@ -20,9 +24,9 @@ using namespace algos::pac_verifier;
 double HistogramUCCPACVerifier::GetHistogramUpperBound() const {
     // TODO: This may be implemented much more effectively (though approximately)
     double max_dist = 0;
-    for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
-        for (std::size_t j = i + 1; j < tuples_->size(); ++j) {
-            auto dist = (*metric_)((*tuples_)[i], (*tuples_)[j]);
+    for (std::size_t i = 0; i < tuples_.size() - 1; ++i) {
+        for (std::size_t j = i + 1; j < tuples_.size(); ++j) {
+            auto dist = (*metric_)(tuples_[i], tuples_[j]);
             max_dist = std::max(max_dist, dist);
         }
     }
@@ -33,9 +37,11 @@ double HistogramUCCPACVerifier::GetHistogramUpperBoundApprox() const {
     // d(first, tuples[i]) + d(tuples[i], tuples[j]) >= d(first, tuples[j])
     // d(tuples[i], tuples[j]) <= 2 * max{d(first, tuples[i]), d(first, tuples[j])}
     double max_dist_single_dim = 0;
-    auto const& first = tuples_->front();
-    for (auto it = std::next(tuples_->begin()); it != tuples_->end(); ++it) {
+    auto const& first = tuples_.front();
+    for (auto it = std::next(tuples_.begin()); it != tuples_.end(); ++it) {
         auto dist = (*metric_)(first, *it);
+        // TODO: We can store real max distance for each bucket for relatively no cost
+        // Should experiment with this
         max_dist_single_dim = std::max(max_dist_single_dim, dist);
     }
     return max_dist_single_dim * 2;
@@ -51,9 +57,9 @@ void HistogramUCCPACVerifier::BuildHistogram() {
     }
 
     real_max_distance_ = 0;
-    for (std::size_t i = 0; i < tuples_->size() - 1; ++i) {
-        for (std::size_t j = i + 1; j < tuples_->size(); ++j) {
-            auto dist = (*metric_)((*tuples_)[i], (*tuples_)[j]);
+    for (std::size_t i = 0; i < tuples_.size() - 1; ++i) {
+        for (std::size_t j = i + 1; j < tuples_.size(); ++j) {
+            auto dist = (*metric_)(tuples_[i], tuples_[j]);
             histogram_.Record(dist, 2);
             if (dist == 0) {
                 zero_dist_pairs_ += 2;
@@ -63,8 +69,8 @@ void HistogramUCCPACVerifier::BuildHistogram() {
     }
 
     // Diagonal
-    histogram_.Record(0, tuples_->size());
-    zero_dist_pairs_ += tuples_->size();
+    histogram_.Record(0, tuples_.size());
+    zero_dist_pairs_ += tuples_.size();
 }
 
 std::vector<PACVerifier::EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiricalProbabilities() {
@@ -127,21 +133,24 @@ PACVerifier::EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(dou
     // It's guaranteed that GetEpsilonDeltaForEpsilon is always called after ExecuteInternal()
     assert(cached_ecdf_);
 
-    auto [elem_count, upper_bound] = cached_ecdf_->Get(epsilon);
-    // A little refinement: if bucket is empty, we can take arbitrary epsilon
-    if (histogram_.Get(epsilon).first > 0) {
-        epsilon = upper_bound;
+    LOG_DEBUG("Finding eps-delta for eps={}...", epsilon);
+
+    auto [_, upper_bound, elem_count] = cached_ecdf_->Get(epsilon);
+    auto delta = GetDelta(elem_count);
+    if (histogram_.Get(epsilon).elem_count == 0) {
+        // A little refinement: if bucket is empty, we can take arbitrary epsilon
+        return {epsilon, delta};
     }
-    return {epsilon, GetDelta(elem_count)};
+    if (!std::isfinite(upper_bound)) {
+        // We shouldn't return infinity when every epsilon is finite
+        return {real_max_distance_, delta};
+    }
+    return {upper_bound, delta};
 }
 
 void HistogramUCCPACVerifier::ExecuteInternal() {
     LogCommonOptions();
 
-    // TODO: Since we build histogram in "execute-time", we can save a pass when max_epsilon is
-    // given (but this requires a thorough review of PAC-Man).
-    // Otherwise, we can move delta_steps to "configuration" and build a histogram in
-    // "configure-time"
     BuildHistogram();
     LOG_DEBUG("Histogram: {}", histogram_.ToString());
     histogram_.Dump("histogram.txt");
@@ -149,6 +158,10 @@ void HistogramUCCPACVerifier::ExecuteInternal() {
     auto emp_probabilities = CalculateEmpiricalProbabilities();
     auto [epsilon, delta] = FindEpsilonDelta(std::move(emp_probabilities));
 
+    pac_ = MakePAC(epsilon, delta);
+}
+
+model::UCCPAC HistogramUCCPACVerifier::MakePAC(double epsilon, double delta) const {
     std::vector<std::string> column_names;
     column_names.reserve(column_indices_.size());
     auto const& columns = TypedRelation().GetSchema()->GetColumns();
@@ -156,7 +169,7 @@ void HistogramUCCPACVerifier::ExecuteInternal() {
             column_indices_, std::back_inserter(column_names),
             [&columns](config::IndexType idx) -> std::string { return columns[idx]->GetName(); });
     auto column_indices = column_indices_;
-    pac_ = model::UCCPAC(std::move(column_indices), std::move(column_names), epsilon, delta);
+    return model::UCCPAC{std::move(column_indices), std::move(column_names), epsilon, delta};
 }
 
 HistogramUCCPACVerifier::HistogramUCCPACVerifier() {
@@ -165,4 +178,66 @@ HistogramUCCPACVerifier::HistogramUCCPACVerifier() {
     RegisterOption(Option{&histogram_bucket_count_multiplier_, kHistogramMultiplier,
                           kDHistogramMultiplier, 1u});
     MakeOptionsAvailable({kHistogramMultiplier});
+}
+
+model::UCCPAC const& HistogramUCCPACVerifier::FindEpsilon(double delta) {
+    if (!input_table_) {
+        throw std::runtime_error("LoadData must be called before FindEpsilon");
+    }
+    if (delta < 0 || delta > 1) {
+        throw std::runtime_error("Detla must be in [0, 1]");
+    }
+    std::size_t total_needed_pairs = std::ceil(GetNumPairs(delta));
+    // needed_pairs is total_needed_pairs \cap lower triangle
+    // All next computations are performed only on the lower triangle
+    // delta = (needed_pairs * 2 + tuples.size()) / total_pairs = total_needed_pairs / total_pairs
+    std::size_t needed_pairs = std::ceil((total_needed_pairs - tuples_.size()) / 2);
+
+    std::vector<double> distances;
+    distances.reserve(tuples_.size() * (tuples_.size() - 1) / 2);
+    for (std::size_t i = 0; i < tuples_.size() - 1; ++i) {
+        for (std::size_t j = i + 1; j < tuples_.size(); ++j) {
+            distances.push_back((*metric_)(tuples_[i], tuples_[j]));
+        }
+    }
+
+    std::ranges::nth_element(distances, std::next(distances.begin(), needed_pairs));
+    auto epsilon = distances[needed_pairs];
+    // Actual refinement (i. e. finding max delta with the same epsilon) would be too expensive and
+    // ruin all optimizations
+    // But since each pair has a counterpart, we can refine a little for no cost
+    if ((total_needed_pairs - tuples_.size()) % 2 == 0) {
+        delta = GetDelta(total_needed_pairs + 1);
+    }
+
+    pac_ = MakePAC(epsilon, delta);
+    return *pac_;
+}
+
+model::UCCPAC const& HistogramUCCPACVerifier::FindDelta(double epsilon) {
+    if (!input_table_) {
+        throw std::runtime_error("LoadData must be called before FindDelta");
+    }
+    if (epsilon < 0) {
+        throw std::runtime_error("Epsilon must be non-negative");
+    }
+    if (!std::isfinite(epsilon)) {
+        if (real_max_distance_ > 0) {
+            pac_ = MakePAC(real_max_distance_, 1);
+        } else {
+            pac_ = MakePAC(epsilon, 1);
+        }
+        return *pac_;
+    }
+    std::size_t lower_count = tuples_.size();
+    for (std::size_t i = 0; i < tuples_.size() - 1; ++i) {
+        for (std::size_t j = i + 1; j < tuples_.size(); ++j) {
+            auto dist = (*metric_)(tuples_[i], tuples_[j]);
+            if (dist <= epsilon) {
+                lower_count += 2;
+            }
+        }
+    }
+    pac_ = MakePAC(epsilon, GetDelta(lower_count));
+    return *pac_;
 }

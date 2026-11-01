@@ -69,6 +69,7 @@ std::optional<PACVerifier::EpsilonDelta> PACVerifier::CheckPairsBetweenMinMaxEps
     }
     if (min_epsilon_ > 0) {
         auto eps_delta_pair = GetEpsilonDeltaForEpsilon(min_epsilon_);
+        LOG_DEBUG("Eps-delta pair for min_eps={}: {}, {}", min_epsilon_, eps_delta_pair.epsilon, eps_delta_pair.delta);
         if (eps_delta_pair.epsilon > empirical_probabilities.back().epsilon - kDistThreshold) {
             LOG_INFO("No pairs after min eps. Taking last pair");
             // Let `GetEpsilonDeltaForEpsilon` select delta here

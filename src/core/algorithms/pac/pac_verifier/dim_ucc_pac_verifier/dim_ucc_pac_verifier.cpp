@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
+#include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/pac_verifier/options.h"
-#include "core/algorithms/pac/pac_verifier/util/make_tuples.h"
 #include "core/config/custom_metric/custom_vector_metric/option.h"
 #include "core/config/descriptions.h"
 #include "core/config/indices/option.h"
@@ -12,6 +12,28 @@
 #include "core/config/tabular_data/input_table/option.h"
 
 using namespace algos::pac_verifier;
+
+namespace {
+pac::model::Tuples MakeTuples(std::vector<::model::TypedColumnData> const& col_data,
+                              config::IndicesType const& indices) {
+    std::vector<std::vector<std::byte const*> const*> columns_data;
+    columns_data.reserve(indices.size());
+    std::ranges::transform(
+            indices, std::back_inserter(columns_data),
+            [&col_data](auto const col_idx) { return &col_data[col_idx].GetData(); });
+
+    auto num_rows = col_data.front().GetNumRows();
+    pac::model::Tuples tuples;
+    tuples.reserve(num_rows);
+    for (std::size_t row_idx = 0; row_idx < num_rows; ++row_idx) {
+        pac::model::Tuple tuple(indices.size());
+        std::ranges::transform(columns_data, tuple.begin(),
+                               [row_idx](auto const* col_data) { return (*col_data)[row_idx]; });
+        tuples.push_back(tuple);
+    }
+    return tuples;
+}
+}  // namespace
 
 void DimUCCPACVerifier::PreparePACTypeData() {
     std::vector<model::Type const*> types(column_indices_.size());
@@ -26,9 +48,7 @@ void DimUCCPACVerifier::PreparePACTypeData() {
             [&col_data](std::size_t idx) { return col_data[idx].GetColumn()->GetName(); });
     metric_ = metric_opt_->SetTypes(types, column_names);
 
-    tuple_type_ = std::make_shared<pac::model::TupleType>(std::move(types));
-
-    tuples_ = pac::util::MakeTuples(TypedRelation().GetColumnData(), column_indices_);
+    tuples_ = MakeTuples(TypedRelation().GetColumnData(), column_indices_);
 }
 
 DimUCCPACVerifier::DimUCCPACVerifier() {
