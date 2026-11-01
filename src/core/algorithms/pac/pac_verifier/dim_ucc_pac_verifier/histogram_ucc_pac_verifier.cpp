@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
