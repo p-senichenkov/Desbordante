@@ -43,6 +43,9 @@ using namespace pac::model;
 
 constexpr static auto kThreshold = 1e-3;
 
+constexpr static auto kDeltaThreshold = 0.1;
+constexpr static auto kHistogramMultiplierValue = 10;
+
 struct EpsilonDelta {
     double epsilon;
     double delta;
@@ -59,14 +62,13 @@ struct UCCPACVerifyingParams {
                           std::optional<double> min_epsilon = std::nullopt,
                           std::optional<double> max_epsilon = std::nullopt,
                           std::shared_ptr<util::ICustomVectorMetric>&& metric = nullptr)
-        : params({
-                  {kCsvConfig, csv_config},
+        : params({{kCsvConfig, csv_config},
                   {kColumnIndices, std::move(column_indices)},
                   {kMaxDelta, OptToAny(std::move(max_delta))},
                   {kMinEpsilon, OptToAny(std::move(min_epsilon))},
                   {kMaxEpsilon, OptToAny(std::move(max_epsilon))},
                   {kMetric, std::move(metric)},
-          }),
+                  {kHistogramMultiplier, kHistogramMultiplierValue}}),
           exp_epsilon(expected_epsilon),
           exp_delta(expected_delta) {}
 
@@ -92,7 +94,7 @@ TEST_P(TestHistogramUCCPACVerifier, DefaultTest) {
     auto const& pac = verifier->GetPAC();
     SanityCheck(pac);
     // EXPECT_NEAR(pac.GetEpsilon(), p.exp_epsilon, kThreshold);
-    // EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kThreshold);
+    EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kDeltaThreshold);
 }
 
 // Same dataset and indices are used in many tests

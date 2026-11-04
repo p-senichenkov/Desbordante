@@ -200,16 +200,18 @@ model::UCCPAC const& HistogramUCCPACVerifier::FindEpsilon(double delta) {
         }
     }
 
-    std::ranges::nth_element(distances, std::next(distances.begin(), needed_pairs));
-    auto epsilon = distances[needed_pairs];
-    // Actual refinement (i. e. finding max delta with the same epsilon) would be too expensive and
-    // ruin all optimizations
-    // But since each pair has a counterpart, we can refine a little for no cost
-    if ((total_needed_pairs - tuples_.size()) % 2 == 0) {
-        delta = GetDelta(total_needed_pairs + 1);
-    }
+    // See
+    // https://github.com/p-senichenkov/Domain-PAC-validation-comparison/blob/main/UCC-PAC/refinement-example.svg
+    // "Previous" epsilon and delta are `needed_pairs - 1` and "next" are `needed_pairs`
+    // Since inequalities are not strict, our ECDF are "right-end-opened", i. e.
+    // point (previous epsilon, next delta) is valid
+    // It's clear from the UCC PAC definition, that (previous epsilon, next delta) is the best
+    // choice
 
-    pac_ = MakePAC(epsilon, delta);
+    std::ranges::nth_element(distances, std::next(distances.begin(), needed_pairs - 1));
+    auto prev_epsilon = distances[needed_pairs - 1];
+
+    pac_ = MakePAC(prev_epsilon, delta);
     return *pac_;
 }
 
