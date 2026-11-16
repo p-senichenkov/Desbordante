@@ -97,10 +97,6 @@ std::vector<EpsilonDelta> DomainPACVerifier::FindEpsilons() const {
 }
 
 void DomainPACVerifier::ExecuteInternal() {
-    pac_man_ = std::make_unique<PACMan>(
-            min_epsilon_, max_epsilon_, min_delta_, 1, diagonal_threshold_,
-            [this](double epsilon) { return GetEpsilonDeltaForEpsilon(epsilon); });
-
     LOG_DEBUG("Common PAC verifier options: delta: [{}, 1], eps: [{}, {}], delta steps: {}",
               min_delta_, min_epsilon_, max_epsilon_, delta_steps_);
 
@@ -161,6 +157,13 @@ EpsilonDelta DomainPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const 
 }
 
 EpsilonDelta DomainPACVerifier::FindPAC() {
+    PACMan pac_man{min_epsilon_,
+                   max_epsilon_,
+                   min_delta_,
+                   1,
+                   diagonal_threshold_,
+                   [this](double epsilon) { return GetEpsilonDeltaForEpsilon(epsilon); }};
+
     domain_end_ = std::ranges::partition_point(
             dists_from_domain_, [](auto const& p) { return std::abs(p.second) < kDistThreshold; });
 
@@ -171,7 +174,7 @@ EpsilonDelta DomainPACVerifier::FindPAC() {
     LOG_TRACE("Initial domain size: {}", std::distance(dists_from_domain_.cbegin(), domain_end_));
 
     auto empirical_probabilities = FindEpsilons();
-    return pac_man_->FindEpsilonDelta(std::move(empirical_probabilities));
+    return pac_man.FindEpsilonDelta(std::move(empirical_probabilities));
 }
 
 EpsilonDelta DomainPACVerifier::FindEpsilon() {
@@ -206,14 +209,13 @@ DomainPACVerifier::DomainPACVerifier() {
     auto get_min_epsilon = [this]() { return min_epsilon_; };
     auto get_max_epsilon = [this]() { return max_epsilon_; };
     auto get_min_delta = [this]() { return min_delta_; };
-    auto get_max_delta = [this]() { return max_delta_; };
 
     RegisterOption(kMinEpsilonOption(&min_epsilon_).SetConditionalOpts({{nullptr, {kMaxEpsilon}}}));
     RegisterOption(MaxEpsilonOption(get_min_epsilon)(&max_epsilon_)
                            .SetConditionalOpts({{nullptr, {kMinDelta}}}));
     RegisterOption(MinDeltaOption(get_min_epsilon, get_max_epsilon)(&min_delta_)
                            .SetConditionalOpts({{nullptr, {kDeltaSteps}}}));
-    RegisterOption(DeltaStepsOption(get_min_delta, get_max_delta)(&delta_steps_));
+    RegisterOption(DeltaStepsOption(get_min_delta, []() { return 1; })(&delta_steps_));
     RegisterOption(kDiagonalThresholdOption(&diagonal_threshold_));
 
     RegisterOption(
