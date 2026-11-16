@@ -14,6 +14,7 @@
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_highlight.h"
 #include "core/algorithms/pac/pac_verifier/pac_man.h"
 #include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
+#include "core/algorithms/pac/pac_verifier/util/validation_mode.h"
 #include "core/config/indices/type.h"
 #include "core/config/tabular_data/input_table_type.h"
 #include "core/model/table/column_layout_typed_relation_data.h"
@@ -30,11 +31,20 @@ private:
     std::shared_ptr<pac::model::IDomain> domain_;
 
     config::InputTable input_table_;
+    double diagonal_threshold_;
+    PACValidationMode mode_;
+
+    // Find PAC mode
     double min_epsilon_;
     double max_epsilon_;
     double min_delta_;
-    double diagonal_threshold_;
     unsigned long delta_steps_;
+
+    // Find epsilon mode
+    double delta_;
+
+    // Find delta mode
+    double epsilon_;
 
     std::unique_ptr<model::ColumnLayoutTypedRelationData> typed_relation_;
 
