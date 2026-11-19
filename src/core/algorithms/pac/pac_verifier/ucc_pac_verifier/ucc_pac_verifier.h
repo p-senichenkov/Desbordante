@@ -7,7 +7,7 @@
 
 #include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/model/tuple_type.h"
-#include "core/algorithms/pac/pac_verifier/pac_verifier.h"
+#include "core/algorithms/pac/pac_verifier/pac_man.h"
 #include "core/algorithms/pac/pac_verifier/pairwise_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_highlight.h"
 #include "core/algorithms/pac/pac_verifier/util/tuple_pair.h"
@@ -16,6 +16,7 @@
 #include "core/config/custom_metric/custom_vector_metric/type.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
+#include "core/config/tabular_data/input_table_type.h"
 #include "core/util/custom_metric/custom_vector_metric.h"
 
 namespace algos::pac_verifier {
@@ -39,9 +40,25 @@ class UCCPACVerifier final : public PairWisePACVerifier {
 private:
     using Pairs = std::vector<TuplePair>;
 
+    config::InputTable input_table_;
     config::IndicesType column_indices_;
     config::CustomVectorMetricOptionType metric_opt_;
     config::CustomVectorMetricType metric_;
+    double diagonal_threshold_;
+
+    // Find PAC mode
+    double min_epsilon_;
+    double max_epsilon_;
+    double min_delta_;
+    double max_delta_;
+
+    // Find epsilon mode
+    double delta_;
+
+    // Find delta mode
+    double epsilon_;
+
+    std::unique_ptr<model::ColumnLayoutTypedRelationData> typed_relation_;
 
     std::shared_ptr<pac::model::TupleType> tuple_type_;
     std::shared_ptr<std::vector<pac::model::Tuple>> tuples_;
