@@ -43,10 +43,16 @@ using namespace pac::model;
 
 constexpr static auto kThreshold = 1e-3;
 
-struct EpsilonDelta {
-    double epsilon;
-    double delta;
-};
+void RunUCCPACVerifierTest(algos::StdParamsMap params, double exp_epsilon, double exp_delta,
+                           algos::StdParamsMap const& extra_params = {}) {
+    params.insert(extra_params.begin(), extra_params.end());
+    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
+    algo->Execute();
+    auto pac = algo->GetPAC();
+    SanityCheck(pac);
+    EXPECT_NEAR(pac.GetEpsilon(), exp_epsilon, kThreshold);
+    EXPECT_NEAR(pac.GetDelta(), exp_delta, kThreshold);
+}
 
 struct UCCPACVerifyingParams {
     algos::StdParamsMap params;
@@ -71,7 +77,7 @@ struct UCCPACVerifyingParams {
           exp_delta(expected_delta) {}
 
     UCCPACVerifyingParams(CSVConfig const& csv_config, config::IndicesType&& column_indices,
-                          EpsilonDelta const& eps_delta,
+                          algos::pac_verifier::EpsilonDelta const& eps_delta,
                           std::optional<double> max_delta = std::nullopt,
                           std::optional<double> min_epsilon = std::nullopt,
                           std::optional<double> max_epsilon = std::nullopt,
@@ -85,21 +91,14 @@ class TestHistogramUCCPACVerifier : public testing::TestWithParam<UCCPACVerifyin
 
 TEST_P(TestHistogramUCCPACVerifier, DefaultTest) {
     auto const& p = GetParam();
-    auto verifier =
-            algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(p.params);
-    verifier->Execute();
-
-    auto const& pac = verifier->GetPAC();
-    SanityCheck(pac);
-    // EXPECT_NEAR(pac.GetEpsilon(), p.exp_epsilon, kThreshold);
-    // EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kThreshold);
+    RunUCCPACVerifierTest(p.params, p.exp_epsilon, p.exp_delta);
 }
 
 // Same dataset and indices are used in many tests
 // https://github.com/p-senichenkov/Domain-PAC-validation-comparison/blob/main/UCC-PAC/metirc-coords-annotated.pdf
 // Note that there are barely visible steps below visible knees, and algorithm "slides down" to
 // these steps
-static std::vector<EpsilonDelta> const kMetricCoordsKnees{
+static std::vector<algos::pac_verifier::EpsilonDelta> const kMetricCoordsKnees{
         {0, 0}, {34.995, 0.514}, {77.986, 0.598}, {108, 0.6}, {120, 0.74}, {197.191, 0.846}};
 
 INSTANTIATE_TEST_SUITE_P(
@@ -136,7 +135,7 @@ INSTANTIATE_TEST_SUITE_P(
                 // TODO(p-senchenkov): Something more?
         }));
 
-UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
+UCCPACVerifyingParams MetricMoviesBoundsParams(algos::pac_verifier::EpsilonDelta const& eps_delta,
                                                std::optional<double> max_delta = std::nullopt,
                                                std::optional<double> min_eps = std::nullopt,
                                                std::optional<double> max_eps = std::nullopt) {
@@ -167,38 +166,6 @@ INSTANTIATE_TEST_SUITE_P(
                 MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
-TEST(HistogramUCCPACValidation, EpsByDelta) {
-    using namespace config::names;
-
-    static auto const kDelta = kMetricCoordsKnees[2].delta;
-    static auto const kExpectedEps = kMetricCoordsKnees[2].epsilon;
-
-    algos::StdParamsMap params{{kCsvConfig, kMetricCoords},
-                               {kColumnIndices, config::IndicesType{2, 3}}};
-    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
-    auto const& pac = algo->FindEpsilon(kDelta);
-
-    SanityCheck(pac);
-    EXPECT_NEAR(pac.GetEpsilon(), kExpectedEps, kThreshold);
-    EXPECT_NEAR(pac.GetDelta(), kDelta, kThreshold);
-}
-
-TEST(HistogramUCCPACValidation, DeltaByEps) {
-    using namespace config::names;
-
-    static auto const kEps = kMetricCoordsKnees[2].epsilon;
-    static auto const kExpectedDelta = kMetricCoordsKnees[2].delta;
-
-    algos::StdParamsMap params{{kCsvConfig, kMetricCoords},
-                               {kColumnIndices, config::IndicesType{2, 3}}};
-    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params);
-    auto const& pac = algo->FindDelta(kEps);
-
-    SanityCheck(pac);
-    EXPECT_NEAR(pac.GetEpsilon(), kEps, kThreshold);
-    EXPECT_NEAR(pac.GetDelta(), kExpectedDelta, kThreshold);
-}
-
 TEST(HistogramUCCPACVerifierTests, DefaultMetricFails) {
     // Check that an attempt to use default metric on non-metrizable column results in clear error
     algos::StdParamsMap params{
@@ -209,4 +176,54 @@ TEST(HistogramUCCPACVerifierTests, DefaultMetricFails) {
             algos::CreateAndLoadAlgorithm<algos::pac_verifier::HistogramUCCPACVerifier>(params),
             config::ConfigurationError);
 }
+
+struct UCCPACVerifierModesParams {
+    algos::StdParamsMap params;
+    double epsilon;
+    double delta;
+
+    UCCPACVerifierModesParams(CSVConfig const& csv_config, config::IndicesType&& col_indices,
+                              double epsilon, double delta)
+        : params({
+                  {kCsvConfig, csv_config},
+                  {kColumnIndices, std::move(col_indices)},
+          }),
+          epsilon(epsilon),
+          delta(delta) {}
+
+    UCCPACVerifierModesParams(CSVConfig const& csv_config, config::IndicesType&& col_indices,
+                              algos::pac_verifier::EpsilonDelta epsilon_delta)
+        : UCCPACVerifierModesParams(csv_config, std::move(col_indices), epsilon_delta.epsilon,
+                                    epsilon_delta.delta) {}
+};
+
+class TestUCCPACVerifierModes : public ::testing::TestWithParam<UCCPACVerifierModesParams> {};
+
+TEST_P(TestUCCPACVerifierModes, ValidationModes) {
+    using enum algos::pac_verifier::PACValidationMode;
+    constexpr static auto kInfinity = std::numeric_limits<double>::infinity();
+
+    auto const& p = GetParam();
+
+    // Explicit find-epsilon
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kPacValidationMode, kFindEpsilon}, {kDelta, p.delta}});
+    // Implicit find-epsilon
+    RunUCCPACVerifierTest(
+            p.params, p.epsilon, p.delta,
+            {{kMinEpsilon, kInfinity}, {kMaxEpsilon, kInfinity}, {kMaxDelta, p.delta}});
+    // Explicit find-delta
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kPacValidationMode, kFindDelta}, {kEpsilon, p.epsilon}});
+    // Implicit find-delta
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kMinEpsilon, p.epsilon}, {kMaxEpsilon, p.epsilon}});
+}
+
+INSTANTIATE_TEST_SUITE_P(ValidationModes, TestUCCPACVerifierModes,
+                         testing::ValuesIn({
+                                 UCCPACVerifierModesParams(kMetricCoords, {2, 3},
+                                                           kMetricCoordsKnees[2]),
+                                 // TODO: moar!
+                         }));
 }  // namespace tests

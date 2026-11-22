@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstddef>
 #include <format>
-#include <fstream>
 #include <iterator>
 #include <limits>
 #include <sstream>
@@ -151,13 +150,6 @@ public:
             out << std::format("{} {}]\n", bucket.elem_count, bucket.upper_bound);
         }
         return out.str();
-    }
-
-    void Dump(std::string_view const& filename) const {
-        std::ofstream ofs{filename.data()};
-        for (auto const& bucket : storage_.StrippedBuckets()) {
-            ofs << std::format("{} {}\n", bucket.elem_count, bucket.upper_bound);
-        }
     }
 
     std::vector<detail::Bucket> Buckets() const {

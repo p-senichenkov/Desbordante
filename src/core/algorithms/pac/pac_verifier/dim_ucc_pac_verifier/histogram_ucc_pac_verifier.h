@@ -5,7 +5,7 @@
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/dim_ucc_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
-#include "core/algorithms/pac/ucc_pac.h"
+#include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
 
 namespace algos::pac_verifier {
 class HistogramUCCPACVerifier final : public DimUCCPACVerifier {
@@ -35,7 +35,7 @@ private:
     double GetNumPairs(double delta) const;
     double GetDelta(std::size_t num_pairs) const;
 
-    EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const override;
+    EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const;
     void ExecuteInternal() override;
 
     void ResetState() override {
@@ -44,16 +44,16 @@ private:
         real_max_distance_ = 0;
     }
 
-    void PreparePACTypeData() override {
-        DimUCCPACVerifier::PreparePACTypeData();
+    void LoadDataInternal() override {
+        DimUCCPACVerifier::LoadDataInternal();
         total_pairs_ = tuples_.size() * tuples_.size();
     }
 
-    model::UCCPAC MakePAC(double epsilon, double delta) const;
+    EpsilonDelta FindPAC() override;
+    EpsilonDelta FindEpsilon() override;
+    EpsilonDelta FindDelta() override;
 
 public:
     HistogramUCCPACVerifier();
-    model::UCCPAC const& FindEpsilon(double delta) override;
-    model::UCCPAC const& FindDelta(double epsilon) override;
 };
 }  // namespace algos::pac_verifier

@@ -10,6 +10,7 @@
 #include "core/config/names.h"
 #include "core/config/option_using.h"
 #include "core/config/tabular_data/input_table/option.h"
+#include "core/util/logger.h"
 
 using namespace algos::pac_verifier;
 
@@ -35,9 +36,15 @@ pac::model::Tuples MakeTuples(std::vector<::model::TypedColumnData> const& col_d
 }
 }  // namespace
 
-void DimUCCPACVerifier::PreparePACTypeData() {
+void DimUCCPACVerifier::LoadDataInternal() {
+    typed_relation_ = model::ColumnLayoutTypedRelationData::CreateFrom(*input_table_, true);
+    input_table_->Reset();
+    if (typed_relation_->GetColumnData().empty()) {
+        throw std::runtime_error("Got an empty dataset: PAC validation is meaningless.");
+    }
+
     std::vector<model::Type const*> types(column_indices_.size());
-    auto const& col_data = TypedRelation().GetColumnData();
+    auto const& col_data = typed_relation_->GetColumnData();
     std::ranges::transform(column_indices_, types.begin(),
                            [&col_data](std::size_t const idx) { return &col_data[idx].GetType(); });
 
@@ -48,7 +55,50 @@ void DimUCCPACVerifier::PreparePACTypeData() {
             [&col_data](std::size_t idx) { return col_data[idx].GetColumn()->GetName(); });
     metric_ = metric_opt_->SetTypes(types, column_names);
 
-    tuples_ = MakeTuples(TypedRelation().GetColumnData(), column_indices_);
+    tuples_ = MakeTuples(typed_relation_->GetColumnData(), column_indices_);
+}
+
+void DimUCCPACVerifier::ExecuteInternal() {
+    LOG_DEBUG("Common PAC verifier options: delta: [0, {}], eps: [{}, {}], delta steps: {}",
+              max_delta_, min_epsilon_, max_epsilon_, delta_steps_);
+
+    std::ostringstream oss;
+    oss << '{';
+    for (auto it = column_indices_.begin(); it != column_indices_.end(); ++it) {
+        if (it != column_indices_.begin()) {
+            oss << ", ";
+        }
+        oss << *it;
+    }
+    oss << '}';
+    LOG_INFO("Verifying UCC PAC on columns {}", oss.str());
+
+    EpsilonDelta eps_delta;
+    auto [mode, eps_override, delta_override] =
+            SelectPACValidationMode(mode_, min_epsilon_, max_epsilon_, 0, max_delta_);
+    switch (mode) {
+        case PACValidationMode::kFindPac:
+            eps_delta = FindPAC();
+            break;
+        case PACValidationMode::kFindEpsilon:
+            if (delta_override) {
+                delta_ = *delta_override;
+            }
+            eps_delta = FindEpsilon();
+            break;
+        case PACValidationMode::kFindDelta:
+            if (eps_override) {
+                epsilon_ = *eps_override;
+            }
+            eps_delta = FindDelta();
+            break;
+    }
+
+    Vertical columns = typed_relation_->GetSchema()->GetVertical(
+            util::IndicesToBitset(column_indices_, typed_relation_->GetNumColumns()));
+    pac_ = model::UCCPAC{std::move(columns), eps_delta.epsilon, eps_delta.delta};
+
+    LOG_INFO("Result: {}", pac_->ToLongString());
 }
 
 DimUCCPACVerifier::DimUCCPACVerifier() {
@@ -57,7 +107,7 @@ DimUCCPACVerifier::DimUCCPACVerifier() {
 
     auto get_min_epsilon = [this]() { return min_epsilon_; };
     auto get_max_epsilon = [this]() { return max_epsilon_; };
-    auto get_min_delta = [this]() { return min_delta_; };
+    auto get_min_delta = []() { return 0; };
     auto get_max_delta = [this]() { return max_delta_; };
 
     RegisterOption(kMinEpsilonOption(&min_epsilon_).SetConditionalOpts({{nullptr, {kMaxEpsilon}}}));

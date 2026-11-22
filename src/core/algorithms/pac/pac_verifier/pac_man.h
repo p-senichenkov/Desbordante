@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
-#include "core/algorithms/pac/pac_verifier/util/validation_mode.h"
 
 namespace algos::pac_verifier {
 /// @brief PAC-Man algorithm. Uses elbow method to find an optimal PAC on a ECDF
