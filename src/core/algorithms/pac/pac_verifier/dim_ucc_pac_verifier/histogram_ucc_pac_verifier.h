@@ -20,13 +20,12 @@ private:
     double real_max_distance_ = 0;
 
     std::size_t total_pairs_;
-
-    mutable std::optional<utils::Ecdf> cached_ecdf_;
+    std::optional<utils::Ecdf> cached_ecdf_;
 
     // Lower bound is always 0
     // Maybe we could optimize things a little without this assumption, but I'm not sure
     double GetHistogramUpperBound() const;
-    // Error is no more than 2x
+    // Error is no more than 2x (currently)
     double GetHistogramUpperBoundApprox() const;
     void BuildHistogram();
 
@@ -36,7 +35,6 @@ private:
     double GetDelta(std::size_t num_pairs) const;
 
     EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const;
-    void ExecuteInternal() override;
 
     void ResetState() override {
         DimUCCPACVerifier::ResetState();

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <utility>
 
 #include "core/algorithms/pac/pac_verifier/dim_ucc_pac_verifier/histogram.h"
 #include "core/algorithms/pac/pac_verifier/pac_man.h"
@@ -111,6 +112,11 @@ std::vector<EpsilonDelta> HistogramUCCPACVerifier::CalculateEmpiricalProbabiliti
 }
 
 // We don't have complex calculations with Greek letters now -- just explicitly count all pairs
+double HistogramUCCPACVerifier::GetNumPairs(double delta) const {
+    assert(0 <= delta && delta <= 1);
+    return delta * total_pairs_;
+}
+
 double HistogramUCCPACVerifier::GetDelta(std::size_t num_pairs) const {
     assert(num_pairs <= total_pairs_);
 
@@ -119,13 +125,7 @@ double HistogramUCCPACVerifier::GetDelta(std::size_t num_pairs) const {
     return delta;
 }
 
-double HistogramUCCPACVerifier::GetNumPairs(double delta) const {
-    assert(0 <= delta && delta <= 1);
-    return delta * total_pairs_;
-}
-
 EpsilonDelta HistogramUCCPACVerifier::GetEpsilonDeltaForEpsilon(double epsilon) const {
-    // It's guaranteed that GetEpsilonDeltaForEpsilon is always called after ExecuteInternal()
     assert(cached_ecdf_);
 
     LOG_DEBUG("Finding eps-delta for eps={}...", epsilon);
@@ -147,11 +147,14 @@ EpsilonDelta HistogramUCCPACVerifier::FindPAC() {
     BuildHistogram();
     LOG_DEBUG("Histogram: {}", histogram_.ToString());
 
+    // CalculateEmpiricalProbabilities() must be called before GetEpsilonDeltaForEpsilon to cache
+    // ECDF
+    auto emp_probabilities = CalculateEmpiricalProbabilities();
     PACMan pac_man{
             min_epsilon_, max_epsilon_, 0, max_delta_, diagonal_threshold_, [this](double epsilon) {
                 return GetEpsilonDeltaForEpsilon(epsilon);
             }};
-    return pac_man.FindEpsilonDelta(CalculateEmpiricalProbabilities());
+    return pac_man.FindEpsilonDelta(std::move(emp_probabilities));
 }
 
 EpsilonDelta HistogramUCCPACVerifier::FindEpsilon() {

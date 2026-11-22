@@ -36,32 +36,9 @@ pac::model::Tuples MakeTuples(std::vector<::model::TypedColumnData> const& col_d
 }
 }  // namespace
 
-void DimUCCPACVerifier::LoadDataInternal() {
-    typed_relation_ = model::ColumnLayoutTypedRelationData::CreateFrom(*input_table_, true);
-    input_table_->Reset();
-    if (typed_relation_->GetColumnData().empty()) {
-        throw std::runtime_error("Got an empty dataset: PAC validation is meaningless.");
-    }
-
-    std::vector<model::Type const*> types(column_indices_.size());
-    auto const& col_data = typed_relation_->GetColumnData();
-    std::ranges::transform(column_indices_, types.begin(),
-                           [&col_data](std::size_t const idx) { return &col_data[idx].GetType(); });
-
-    std::vector<std::string> column_names;
-    column_names.reserve(column_indices_.size());
-    std::ranges::transform(
-            column_indices_, std::back_inserter(column_names),
-            [&col_data](std::size_t idx) { return col_data[idx].GetColumn()->GetName(); });
-    metric_ = metric_opt_->SetTypes(types, column_names);
-
-    tuples_ = MakeTuples(typed_relation_->GetColumnData(), column_indices_);
-}
-
 void DimUCCPACVerifier::ExecuteInternal() {
     LOG_DEBUG("Common PAC verifier options: delta: [0, {}], eps: [{}, {}], delta steps: {}",
               max_delta_, min_epsilon_, max_epsilon_, delta_steps_);
-
     std::ostringstream oss;
     oss << '{';
     for (auto it = column_indices_.begin(); it != column_indices_.end(); ++it) {
@@ -97,8 +74,29 @@ void DimUCCPACVerifier::ExecuteInternal() {
     Vertical columns = typed_relation_->GetSchema()->GetVertical(
             util::IndicesToBitset(column_indices_, typed_relation_->GetNumColumns()));
     pac_ = model::UCCPAC{std::move(columns), eps_delta.epsilon, eps_delta.delta};
-
     LOG_INFO("Result: {}", pac_->ToLongString());
+}
+
+void DimUCCPACVerifier::LoadDataInternal() {
+    typed_relation_ = model::ColumnLayoutTypedRelationData::CreateFrom(*input_table_, true);
+    input_table_->Reset();
+    if (typed_relation_->GetColumnData().empty()) {
+        throw std::runtime_error("Got an empty dataset: PAC validation is meaningless.");
+    }
+
+    std::vector<model::Type const*> types(column_indices_.size());
+    auto const& col_data = typed_relation_->GetColumnData();
+    std::ranges::transform(column_indices_, types.begin(),
+                           [&col_data](std::size_t const idx) { return &col_data[idx].GetType(); });
+
+    std::vector<std::string> column_names;
+    column_names.reserve(column_indices_.size());
+    std::ranges::transform(
+            column_indices_, std::back_inserter(column_names),
+            [&col_data](std::size_t idx) { return col_data[idx].GetColumn()->GetName(); });
+    metric_ = metric_opt_->SetTypes(types, column_names);
+
+    tuples_ = MakeTuples(typed_relation_->GetColumnData(), column_indices_);
 }
 
 DimUCCPACVerifier::DimUCCPACVerifier() {
