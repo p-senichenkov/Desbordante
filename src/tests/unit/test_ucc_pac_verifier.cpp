@@ -22,7 +22,6 @@
 #include "core/model/types/builtin.h"
 #include "core/util/custom_metric/custom_vector_metric.h"
 #include "tests/common/all_csv_configs.h"
-#include "tests/common/csv_config_util.h"
 
 namespace {
 template <typename T>
