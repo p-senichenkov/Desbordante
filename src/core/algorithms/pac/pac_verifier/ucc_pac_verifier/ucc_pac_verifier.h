@@ -5,19 +5,20 @@
 #include <optional>
 #include <vector>
 
+#include "core/algorithms/algorithm.h"
 #include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/model/tuple_type.h"
-#include "core/algorithms/pac/pac_verifier/pac_man.h"
 #include "core/algorithms/pac/pac_verifier/pairwise_pac_verifier.h"
 #include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_highlight.h"
+#include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
 #include "core/algorithms/pac/pac_verifier/util/tuple_pair.h"
+#include "core/algorithms/pac/pac_verifier/util/validation_mode.h"
 #include "core/algorithms/pac/ucc_pac.h"
-#include "core/config/custom_metric/custom_metrics/type.h"
 #include "core/config/custom_metric/custom_vector_metric/type.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
 #include "core/config/tabular_data/input_table_type.h"
-#include "core/util/custom_metric/custom_vector_metric.h"
+#include "core/model/table/column_layout_typed_relation_data.h"
 
 namespace algos::pac_verifier {
 /// @brief Unique Column Combination Probabilistic Approximate Constraint verifier
@@ -36,9 +37,22 @@ namespace algos::pac_verifier {
 //    Thus, sigma = sigma' + D + sigma''
 //    Therefore, empirical probability becomes
 //      Pr(eps) = |sigma| / |Gamma| = (2 * |sigma'| + |r|) / |r|^2
-class UCCPACVerifier final : public PairWisePACVerifier {
+class UCCPACVerifier final : public Algorithm {
 private:
-    using Pairs = std::vector<TuplePair>;
+    class EmpiricalProbabilitiesCalculator : public PairwiseEmpiricalProbabilitiesCalculator {
+    private:
+        std::size_t const tuple_count_;
+
+        void RefineDelta(PairsIt&) const override;
+        double GetDelta(std::size_t num_pairs) const override;
+        double GetNumPairs(double delta) const override;
+
+    public:
+        EmpiricalProbabilitiesCalculator(double max_delta, unsigned long delta_steps,
+                                         Pairs const& sorted_pairs, unsigned long tuple_count)
+            : PairwiseEmpiricalProbabilitiesCalculator(0, max_delta, delta_steps, sorted_pairs),
+              tuple_count_(tuple_count) {}
+    };
 
     config::InputTable input_table_;
     config::IndicesType column_indices_;
@@ -46,11 +60,13 @@ private:
     config::CustomVectorMetricType metric_;
     double diagonal_threshold_;
 
+    PACValidationMode mode_;
+
     // Find PAC mode
     double min_epsilon_;
     double max_epsilon_;
-    double min_delta_;
     double max_delta_;
+    unsigned long delta_steps_;
 
     // Find epsilon mode
     double delta_;
@@ -63,33 +79,28 @@ private:
     std::shared_ptr<pac::model::TupleType> tuple_type_;
     std::shared_ptr<std::vector<pac::model::Tuple>> tuples_;
 
-    std::shared_ptr<Pairs> sorted_pairs_;
+    std::shared_ptr<std::vector<TuplePair>> sorted_pairs_;
     std::optional<model::UCCPAC> pac_;
-
-    double GetNumPairs(double delta) const override;
-    double GetDelta(std::size_t num_pairs) const override;
 
     /// @brief Fill sorted_pairs_
     void PreparePairs();
 
-    void PreparePACTypeData() override;
+    void LoadDataInternal() override;
     void ExecuteInternal() override;
-
-    EpsilonDelta GetEpsilonDeltaForEpsilon(double epsilon) const override {
-        return GetEpsilonDeltaForEpsilonImpl(epsilon, *sorted_pairs_);
-    }
 
     void ResetState() override {
         pac_ = std::nullopt;
     }
 
-    void RefineDelta(PairsIt&) const override;
-
     void MakeExecuteOptsAvailable() override {
         using namespace config::names;
 
-        MakeOptionsAvailable({kMinEpsilon, kDiagonalThreshold});
+        MakeOptionsAvailable({kPacValidationMode, kDiagonalThreshold});
     }
+
+    EpsilonDelta FindPAC();
+    EpsilonDelta FindEpsilon();
+    EpsilonDelta FindDelta();
 
 public:
     UCCPACVerifier();

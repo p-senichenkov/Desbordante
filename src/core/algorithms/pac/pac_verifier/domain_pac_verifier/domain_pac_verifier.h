@@ -12,7 +12,6 @@
 #include "core/algorithms/pac/model/tuple.h"
 #include "core/algorithms/pac/model/tuple_type.h"
 #include "core/algorithms/pac/pac_verifier/domain_pac_verifier/domain_pac_highlight.h"
-#include "core/algorithms/pac/pac_verifier/pac_man.h"
 #include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
 #include "core/algorithms/pac/pac_verifier/util/validation_mode.h"
 #include "core/config/indices/type.h"
@@ -55,8 +54,6 @@ private:
     // Iterator to after-last value that falls into domain itself (with eps = 0)
     std::vector<std::pair<TuplesIter, double>>::const_iterator domain_end_;
 
-    std::unique_ptr<PACMan> pac_man_;
-
     std::optional<model::DomainPAC> pac_;
 
     /// @brief For each of @c delta_steps delta_i values in [@c min_delta, 1] find eps_i such that
@@ -71,7 +68,6 @@ private:
 
     void ResetState() override {
         pac_ = std::nullopt;
-        pac_man_ = nullptr;
     }
 
     void MakeExecuteOptsAvailable() override;
@@ -80,9 +76,6 @@ private:
     EpsilonDelta FindPAC();
     EpsilonDelta FindEpsilon();
     EpsilonDelta FindDelta();
-
-public:
-    DomainPACVerifier();
 
 public:
     DomainPACVerifier();

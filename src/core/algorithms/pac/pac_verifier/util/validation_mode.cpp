@@ -17,6 +17,7 @@ std::tuple<PACValidationMode, std::optional<double>, std::optional<double>> Sele
                 return {kFindEpsilon, std::nullopt, min_delta};
             }
             if (!std::isfinite(min_epsilon) && max_delta < 1) {
+                return {kFindEpsilon, std::nullopt, max_delta};
             }
             if (min_epsilon == max_epsilon) {
                 return {kFindDelta, min_epsilon, std::nullopt};

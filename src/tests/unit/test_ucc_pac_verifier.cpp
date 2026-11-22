@@ -13,13 +13,16 @@
 
 #include "core/algorithms/algo_factory.h"
 #include "core/algorithms/pac/pac_verifier/ucc_pac_verifier/ucc_pac_verifier.h"
+#include "core/algorithms/pac/pac_verifier/util/pac_verifier_utils.h"
+#include "core/algorithms/pac/pac_verifier/util/validation_mode.h"
+#include "core/config/custom_metric/custom_vector_metric/type.h"
 #include "core/config/exceptions.h"
 #include "core/config/indices/type.h"
 #include "core/config/names.h"
 #include "core/model/types/builtin.h"
 #include "core/util/custom_metric/custom_vector_metric.h"
-#include "gtest/gtest.h"
 #include "tests/common/all_csv_configs.h"
+#include "tests/common/csv_config_util.h"
 
 namespace {
 template <typename T>
@@ -34,10 +37,15 @@ using namespace pac::model;
 
 constexpr static auto kThreshold = 1e-3;
 
-struct EpsilonDelta {
-    double epsilon;
-    double delta;
-};
+void RunUCCPACVerifierTest(algos::StdParamsMap params, double exp_epsilon, double exp_delta,
+                           algos::StdParamsMap const& extra_params = {}) {
+    params.insert(extra_params.begin(), extra_params.end());
+    auto algo = algos::CreateAndLoadAlgorithm<algos::pac_verifier::UCCPACVerifier>(params);
+    algo->Execute();
+    auto pac = algo->GetPAC();
+    EXPECT_NEAR(pac.GetEpsilon(), exp_epsilon, kThreshold);
+    EXPECT_NEAR(pac.GetDelta(), exp_delta, kThreshold);
+}
 
 struct UCCPACVerifyingParams {
     algos::StdParamsMap params;
@@ -49,7 +57,7 @@ struct UCCPACVerifyingParams {
                           std::optional<double> max_delta = std::nullopt,
                           std::optional<double> min_epsilon = std::nullopt,
                           std::optional<double> max_epsilon = std::nullopt,
-                          std::shared_ptr<util::ICustomVectorMetric>&& metric = nullptr)
+                          config::CustomVectorMetricOptionType&& metric = nullptr)
         : params({
                   {kCsvConfig, csv_config},
                   {kColumnIndices, std::move(column_indices)},
@@ -62,7 +70,7 @@ struct UCCPACVerifyingParams {
           exp_delta(expected_delta) {}
 
     UCCPACVerifyingParams(CSVConfig const& csv_config, config::IndicesType&& column_indices,
-                          EpsilonDelta const& eps_delta,
+                          algos::pac_verifier::EpsilonDelta const& eps_delta,
                           std::optional<double> max_delta = std::nullopt,
                           std::optional<double> min_epsilon = std::nullopt,
                           std::optional<double> max_epsilon = std::nullopt,
@@ -76,29 +84,19 @@ class TestUCCPACVerifier : public testing::TestWithParam<UCCPACVerifyingParams> 
 
 TEST_P(TestUCCPACVerifier, DefaultTest) {
     auto const& p = GetParam();
-    auto verifier = algos::CreateAndLoadAlgorithm<algos::pac_verifier::UCCPACVerifier>(p.params);
-    verifier->Execute();
-
-    auto const& pac = verifier->GetPAC();
-    EXPECT_NEAR(pac.GetEpsilon(), p.exp_epsilon, kThreshold);
-    EXPECT_NEAR(pac.GetDelta(), p.exp_delta, kThreshold);
+    RunUCCPACVerifierTest(p.params, p.exp_epsilon, p.exp_delta);
 }
-
-auto const kAlphabetMetric = [](std::string const& a, std::string const& b) {
-    return std::abs(a.front() - b.front());
-};
 
 // Same dataset and indices are used in many tests
 // https://github.com/p-senichenkov/Domain-PAC-validation-comparison/blob/main/UCC-PAC/metirc-coords-annotated.pdf
 // Note that there are barely visible steps below visible knees, and algorithm "slides down" to
 // these steps
-static std::vector<EpsilonDelta> const kMetricCoordsKnees{
+static std::vector<algos::pac_verifier::EpsilonDelta> const kMetricCoordsKnees{
         {0, 0}, {34.995, 0.514}, {77.986, 0.586}, {108, 0.6}, {120, 0.74}, {197.191, 0.846}};
 
 INSTANTIATE_TEST_SUITE_P(
         Refinement, TestUCCPACVerifier,
         testing::ValuesIn({
-                // FIXME: Тут всё падает, надо расчехлять скрипт
                 // Quite ordinary UCC PAC
                 UCCPACVerifyingParams(kMetricMovies, {2}, 11, 0.402, 0.5),
                 UCCPACVerifyingParams(kMetricCoords, {2, 3}, kMetricCoordsKnees[1], 0.7),
@@ -130,7 +128,7 @@ INSTANTIATE_TEST_SUITE_P(
                 // TODO(p-senchenkov): Something more?
         }));
 
-UCCPACVerifyingParams MetricMoviesBoundsParams(EpsilonDelta const& eps_delta,
+UCCPACVerifyingParams MetricCoordsBoundsParams(algos::pac_verifier::EpsilonDelta const& eps_delta,
                                                std::optional<double> max_delta = std::nullopt,
                                                std::optional<double> min_eps = std::nullopt,
                                                std::optional<double> max_eps = std::nullopt) {
@@ -144,36 +142,21 @@ INSTANTIATE_TEST_SUITE_P(
         ParametrizedRefinement, TestUCCPACVerifier,
         testing::ValuesIn({
                 // Both min epsilon and max epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 1, 50, 180),
                 // Only max epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 1, std::nullopt, 180),
                 // Only min epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[5], 1, 175),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[5], 1, 175),
                 // NOTE: algorithm is allowed to select passed min bound
-                MetricMoviesBoundsParams({125, 0.775}, 1, 125),
+                MetricCoordsBoundsParams({125, 0.775}, 1, 125),
                 // Only max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.57),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.57),
                 // Min epsilon and max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.777, 50),
                 // Max epsilon and max delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[1], 0.7, std::nullopt, 110),
                 // All bounds
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
-        }));
-
-// TODO(p-senichenkov): wonder if these won't fail
-INSTANTIATE_TEST_SUITE_P(
-        Validation, TestUCCPACVerifier,
-        testing::ValuesIn({
-                // Find epsilon by delta
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2],
-                                         // TODO(psenichenkov@): maybe add two separate functions,
-                                         // and do not complicate things?
-                                         kMetricCoordsKnees[2].delta + 0.02,
-                                         std::numeric_limits<double>::infinity(),
-                                         std::numeric_limits<double>::infinity()),
-                // Find delta by epsilon
-                MetricMoviesBoundsParams(kMetricCoordsKnees[2], std::nullopt, 80, 80),
+                MetricCoordsBoundsParams(kMetricCoordsKnees[2], 0.7, 50, 110),
         }));
 
 TEST(UCCPACVerifierTests, DefaultMetricFails) {
@@ -185,6 +168,56 @@ TEST(UCCPACVerifierTests, DefaultMetricFails) {
     EXPECT_THROW(algos::CreateAndLoadAlgorithm<algos::pac_verifier::UCCPACVerifier>(params),
                  config::ConfigurationError);
 }
+
+struct UCCPACVerifierModesParams {
+    algos::StdParamsMap params;
+    double epsilon;
+    double delta;
+
+    UCCPACVerifierModesParams(CSVConfig const& csv_config, config::IndicesType&& col_indices,
+                              double epsilon, double delta)
+        : params({
+                  {kCsvConfig, csv_config},
+                  {kColumnIndices, std::move(col_indices)},
+          }),
+          epsilon(epsilon),
+          delta(delta) {}
+
+    UCCPACVerifierModesParams(CSVConfig const& csv_config, config::IndicesType&& col_indices,
+                              algos::pac_verifier::EpsilonDelta epsilon_delta)
+        : UCCPACVerifierModesParams(csv_config, std::move(col_indices), epsilon_delta.epsilon,
+                                    epsilon_delta.delta) {}
+};
+
+class TestUCCPACVerifierModes : public ::testing::TestWithParam<UCCPACVerifierModesParams> {};
+
+TEST_P(TestUCCPACVerifierModes, ValidationModes) {
+    using enum algos::pac_verifier::PACValidationMode;
+    constexpr static auto kInfinity = std::numeric_limits<double>::infinity();
+
+    auto const& p = GetParam();
+
+    // Explicit find-epsilon
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kPacValidationMode, kFindEpsilon}, {kDelta, p.delta}});
+    // Implicit find-epsilon
+    RunUCCPACVerifierTest(
+            p.params, p.epsilon, p.delta,
+            {{kMinEpsilon, kInfinity}, {kMaxEpsilon, kInfinity}, {kMaxDelta, p.delta}});
+    // Explicit find-delta
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kPacValidationMode, kFindDelta}, {kEpsilon, p.epsilon}});
+    // Implicit find-delta
+    RunUCCPACVerifierTest(p.params, p.epsilon, p.delta,
+                          {{kMinEpsilon, p.epsilon}, {kMaxEpsilon, p.epsilon}});
+}
+
+INSTANTIATE_TEST_SUITE_P(ValidationModes, TestUCCPACVerifierModes,
+                         testing::ValuesIn({
+                                 UCCPACVerifierModesParams(kMetricCoords, {2, 3},
+                                                           kMetricCoordsKnees[2]),
+                                 // TODO: moar!
+                         }));
 
 using IndexPairs = std::vector<std::pair<std::size_t, std::size_t>>;
 
